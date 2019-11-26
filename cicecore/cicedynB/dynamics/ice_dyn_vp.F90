@@ -746,7 +746,7 @@
       do kOL = 1,maxits_nonlin        ! outer loop 
       
       !-----------------------------------------------------------------
-      ! Calc zetaD, Pr, Cb and vrel = f(uprev_k, vprev_k)
+      ! Calc zetaD, etaD, Pr, Cb and vrel = f(uprev_k, vprev_k)
       !-----------------------------------------------------------------
       
       !$OMP PARALLEL DO PRIVATE(iblk)
@@ -798,7 +798,8 @@
                                  dxhy     (:,:,iblk), dyhx(:,:,iblk), & 
                                  cxp      (:,:,iblk), cyp (:,:,iblk), & 
                                  cxm      (:,:,iblk), cym (:,:,iblk), & 
-                                 zetaD (:,:,iblk,:) , Dstrtmp (:,:,:) )
+                                 zetaD (:,:,iblk,:) , etaD (:,:,iblk,:), &
+                                 Dstrtmp (:,:,:) )
       
            call formDiag_step2 (nx_block           , ny_block,           &
                                 icellu       (iblk),                     & 
@@ -826,7 +827,7 @@
                          cxm      (:,:,iblk)  , cym      (:,:,iblk), & 
                          uvel     (:,:,iblk)  , vvel     (:,:,iblk), &      
                          vrel     (:,:,iblk)  , Cb       (:,:,iblk), &  
-                         zetaD    (:,:,iblk,:),                      &
+                         zetaD    (:,:,iblk,:), etaD   (:,:,iblk,:), &
                          umassdti (:,:,iblk)  , fm       (:,:,iblk), & 
                          uarear   (:,:,iblk)  ,                      & 
                          Au       (:,:,iblk)  , Av       (:,:,iblk))
@@ -914,7 +915,7 @@
                        cxp      (:,:,:)   , cyp      (:,:,:)   , & 
                        cxm      (:,:,:)   , cym      (:,:,:)   , & 
                        vrel     (:,:,:)   , Cb       (:,:,:)   , &  
-                       zetaD    (:,:,:,:) ,                      &
+                       zetaD    (:,:,:,:) , etaD     (:,:,:,:) , &
                        umassdti (:,:,:)   , fm       (:,:,:)   , & 
                        uarear   (:,:,:)   , diagvec(:)         , &
                        wk22     (:)       , wk11(:)            , &
@@ -964,7 +965,7 @@
                        cxm      (:,:,iblk)  , cym      (:,:,iblk), &
                        uvel     (:,:,iblk)  , vvel     (:,:,iblk), &      
                        vrel     (:,:,iblk)  , Cb       (:,:,iblk), &  
-                       zetaD    (:,:,iblk,:),                      &
+                       zetaD    (:,:,iblk,:), etaD   (:,:,iblk,:), &
                        umassdti (:,:,iblk)  , fm       (:,:,iblk), & 
                        uarear   (:,:,iblk)  ,                      & 
                        Au       (:,:,iblk)  , Av       (:,:,iblk))                         
@@ -1203,7 +1204,7 @@
       do it_nl = 0, maxits_nonlin        ! nonlinear iteration loop 
          ! Compute quantities needed for computing PDE residual and g(x) (fixed point map)
          !-----------------------------------------------------------------
-         ! Calc zetaD, Pr, Cb and vrel = f(uprev_k, vprev_k)
+         ! Calc zetaD, etaD, Pr, Cb and vrel = f(uprev_k, vprev_k)
          !-----------------------------------------------------------------
          !$OMP PARALLEL DO PRIVATE(iblk)
          do iblk = 1, nblocks
@@ -1262,7 +1263,7 @@
                          cxm      (:,:,iblk)  , cym      (:,:,iblk), &
                          uprev_k  (:,:,iblk)  , vprev_k  (:,:,iblk), &
                          vrel     (:,:,iblk)  , Cb       (:,:,iblk), &
-                         zetaD    (:,:,iblk,:),                      &
+                         zetaD    (:,:,iblk,:), etaD   (:,:,iblk,:), &
                          umassdti (:,:,iblk)  , fm       (:,:,iblk), &
                          uarear   (:,:,iblk)  ,                      &
                          Au       (:,:,iblk)  , Av       (:,:,iblk))
@@ -1315,7 +1316,9 @@
                                        dxhy     (:,:,iblk), dyhx(:,:,iblk), & 
                                        cxp      (:,:,iblk), cyp (:,:,iblk), & 
                                        cxm      (:,:,iblk), cym (:,:,iblk), & 
-                                       zetaD (:,:,iblk,:) , Dstrtmp (:,:,:) )
+                                       zetaD (:,:,iblk,:) , etaD (:,:,iblk,:), &
+                                       Dstrtmp (:,:,:) )
+                                       
                   call formDiag_step2 (nx_block           , ny_block,           &
                                        icellu       (iblk),                     & 
                                        indxui     (:,iblk), indxuj    (:,iblk), &
@@ -1328,7 +1331,7 @@
             endif
             
             ! FGMRES linear solver
-            call fgmres (zetaD,               &
+            call fgmres (zetaD,      etaD,    &
                          Cb,         vrel,    &
                          umassdti,            &
                          halo_info_mask,      &
@@ -1530,7 +1533,7 @@
                                 icellt, icellu,   &
                                 indxti, indxtj,   &
                                 indxui, indxuj,   &
-                                zetaD,            &
+                                zetaD,  etaD,     &
                                 Cb,     vrel,     &
                                 aiu,    umassdti  )
 
@@ -1570,7 +1573,8 @@
          umassdti     ! mass of U-cell/dte (kg/m^2 s)
       
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4), intent(in) :: &
-         zetaD      ! zetaD = 2zeta (viscous coeff)
+         zetaD    , & ! zetaD = 2zeta (viscous coeff)
+         etaD         ! etaD  = 2eta  (viscous coeff)
 
       ! local variables
 
@@ -2147,7 +2151,7 @@
                             dxhy,       dyhx,       & 
                             cxp,        cyp,        & 
                             cxm,        cym,        & 
-                            zetaD,                  & 
+                            zetaD,      etaD,       & 
                             stressp_1,  stressp_2,  & 
                             stressp_3,  stressp_4,  & 
                             stressm_1,  stressm_2,  & 
@@ -2181,7 +2185,8 @@
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,4), & 
          intent(in) :: &
-         zetaD          ! 2*zeta   
+         zetaD    , & ! 2*zeta   
+         etaD         ! 2*eta   
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), & 
          intent(inout) :: &
@@ -2677,7 +2682,7 @@
                          cxm,        cym,      & 
                          uvel,       vvel,     &
                          vrel,       Cb,       &
-                         zetaD,                & 
+                         zetaD,      etaD,     & 
                          umassdti,   fm,       &
                          uarear,               &
                          Au,         Av)
@@ -2718,7 +2723,8 @@
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,4), & 
          intent(in) :: &
-         zetaD          ! 2*zeta   
+         zetaD   , & ! 2*zeta   
+         etaD        ! 2*eta   
          
       real (kind=dbl_kind), dimension (nx_block,ny_block), &
          intent(inout) :: &
@@ -3172,7 +3178,8 @@
                                   dxhy,       dyhx,       & 
                                   cxp,        cyp,        & 
                                   cxm,        cym,        & 
-                                  zetaD,      Dstr )
+                                  zetaD,      etaD,       &
+                                  Dstr )
 
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -3195,7 +3202,8 @@
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,4), & 
          intent(in) :: &
-         zetaD          ! 2*zeta      
+         zetaD    , & ! 2*zeta    
+         etaD         ! 2*eta    
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,8), & 
          intent(inout) :: &
@@ -3888,7 +3896,7 @@
 !
 ! authors: Stéphane Gaudreault, Abdessamad Qaddouri, Philippe Blain, ECCC
 
-      subroutine fgmres (zetaD,               &
+      subroutine fgmres (zetaD,      etaD,    &
                          Cb,         vrel,    &
                          umassdti,            &
                          halo_info_mask,      &
@@ -3899,7 +3907,8 @@
                          maxouter, nbiter, conv)
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4), intent(in) :: &
-         zetaD   ! zetaD = 2*zeta (viscous coefficient)
+         zetaD , & ! zetaD = 2*zeta (viscous coefficient)
+         etaD      ! etaD  = 2*eta  (viscous coefficient)
 
       real (kind=dbl_kind), dimension(nx_block, ny_block, max_blocks), intent(in) :: &
          vrel  , & ! coefficient for tauw 
@@ -4025,7 +4034,7 @@
                       cxm        (:,:,iblk)  , cym        (:,:,iblk), &
                       solx       (:,:,iblk)  , soly       (:,:,iblk), &
                       vrel       (:,:,iblk)  , Cb         (:,:,iblk), &
-                      zetaD      (:,:,iblk,:),                        &
+                      zetaD      (:,:,iblk,:), etaD     (:,:,iblk,:), &
                       umassdti   (:,:,iblk)  , fm         (:,:,iblk), &
                       uarear     (:,:,iblk)  ,                        &
                       workspace_x(:,:,iblk)  , workspace_y(:,:,iblk))
@@ -4094,7 +4103,7 @@
             initer = initer + 1
             nextit = initer + 1
             ! precondition the current Arnoldi vector
-            call precondition(zetaD,                         &
+            call precondition(zetaD,        etaD,            &
                               Cb,           vrel,            &
                               umassdti,                      &
                               arnoldi_basis_x(:,:,:,initer), &
@@ -4121,7 +4130,7 @@
                             cxm        (:,:,iblk)  , cym        (:,:,iblk), &
                             workspace_x(:,:,iblk)  , workspace_y(:,:,iblk), &
                             vrel       (:,:,iblk)  , Cb         (:,:,iblk), &
-                            zetaD      (:,:,iblk,:),                        &
+                            zetaD      (:,:,iblk,:), etaD     (:,:,iblk,:), &
                             umassdti   (:,:,iblk)  , fm         (:,:,iblk), &
                             uarear     (:,:,iblk)  ,                        &
                             arnoldi_basis_x(:,:,iblk,nextit),               &
@@ -4281,7 +4290,7 @@
 !
 ! authors: Stéphane Gaudreault, Abdessamad Qaddouri, Philippe Blain, ECCC
 
-      subroutine pgmres (zetaD,                &
+      subroutine pgmres (zetaD,      etaD,     &
                          Cb,         vrel,     &
                          umassdti,             &
                          solx,       soly,     &
@@ -4291,7 +4300,8 @@
                          maxouter, nbiter, conv)
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4), intent(in) :: &
-         zetaD   ! zetaD = 2*zeta (viscous coefficient)
+         zetaD , & ! zetaD = 2*zeta (viscous coefficient)
+         etaD      ! etaD  = 2*eta  (viscous coefficient)
 
       real (kind=dbl_kind), dimension(nx_block, ny_block, max_blocks), intent(in) :: &
          vrel  , & ! coefficient for tauw 
@@ -4410,7 +4420,7 @@
                       cxm        (:,:,iblk)  , cym        (:,:,iblk), &
                       solx       (:,:,iblk)  , soly       (:,:,iblk), &
                       vrel       (:,:,iblk)  , Cb         (:,:,iblk), &
-                      zetaD      (:,:,iblk,:),                        &
+                      zetaD      (:,:,iblk,:), etaD     (:,:,iblk,:), &
                       umassdti   (:,:,iblk)  , fm         (:,:,iblk), &
                       uarear     (:,:,iblk)  ,                        &
                       workspace_x(:,:,iblk)  , workspace_y(:,:,iblk))
@@ -4480,7 +4490,7 @@
             nextit = initer + 1
             
             ! precondition the current Arnoldi vector
-            call precondition(zetaD,                         &
+            call precondition(zetaD,        etaD,            &
                               Cb,           vrel,            &
                               umassdti,                      &
                               arnoldi_basis_x(:,:,:,initer), &
@@ -4502,7 +4512,7 @@
                             cxm        (:,:,iblk)  , cym        (:,:,iblk), &
                             workspace_x(:,:,iblk)  , workspace_y(:,:,iblk), &
                             vrel       (:,:,iblk)  , Cb         (:,:,iblk), &
-                            zetaD      (:,:,iblk,:),                        &
+                            zetaD      (:,:,iblk,:), zetaD    (:,:,iblk,:), &
                             umassdti   (:,:,iblk)  , fm         (:,:,iblk), &
                             uarear     (:,:,iblk)  ,                        &
                             arnoldi_basis_x(:,:,iblk,nextit),               &
@@ -4608,7 +4618,7 @@
          end do
          
          ! Call preconditioner
-         call precondition(zetaD,                     &
+         call precondition(zetaD,        etaD,        &
                            Cb,           vrel,        &
                            umassdti,                  &
                            workspace_x , workspace_y, &
@@ -4674,7 +4684,7 @@
 !
 ! authors: Philippe Blain, ECCC
 
-      subroutine precondition(zetaD,                &
+      subroutine precondition(zetaD,      etaD,     &
                               Cb,         vrel,     &
                               umassdti,             &
                               vx,         vy,       &
@@ -4683,7 +4693,8 @@
                               wx,         wy)
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4), intent(in) :: &
-         zetaD   ! zetaD = 2*zeta (viscous coefficient)
+         zetaD , & ! zetaD = 2*zeta (viscous coefficient)
+         etaD      ! etaD  = 2*eta  (viscous coefficient)
 
       real (kind=dbl_kind), dimension(nx_block, ny_block, max_blocks), intent(in) :: &
          vrel  , & ! coefficient for tauw 
@@ -4751,7 +4762,7 @@
          tolerance = epsprecond
          maxinner = im_pgmres
          maxouter = maxits_pgmres
-         call pgmres (zetaD,                &
+         call pgmres (zetaD,      etaD,     &
                       Cb,         vrel,     &
                       umassdti,             &
                       wx,         wy,       &

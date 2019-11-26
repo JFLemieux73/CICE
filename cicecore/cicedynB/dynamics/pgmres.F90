@@ -12,7 +12,7 @@
                          cxp,        cyp,             & 
                          cxm,        cym,             & 
                          vrel,       Cb,              &
-                         zetaD,                       & 
+                         zetaD,      etaD,            & 
                          umassdti,   fm,              &
                          uarear,     diagvec,         &
                          sol,        rhs,             &
@@ -69,7 +69,8 @@
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4), & 
          intent(in) :: &
-         zetaD          ! 2*zeta   
+         zetaD   , & ! 2*zeta
+         etaD        ! 2*eta
          
       real (kind=dbl_kind), dimension (n), intent(in) :: &
          diagvec
@@ -172,7 +173,7 @@
                      cxm      (:,:,iblk)  , cym      (:,:,iblk), &
                      utp      (:,:,iblk)  , vtp      (:,:,iblk), &      
                      vrel     (:,:,iblk)  , Cb       (:,:,iblk), &  
-                     zetaD    (:,:,iblk,:),                      &
+                     zetaD    (:,:,iblk,:), etaD   (:,:,iblk,:), &
                      umassdti (:,:,iblk)  , fm       (:,:,iblk), & 
                      uarear   (:,:,iblk)  ,                      & 
                      Au       (:,:,iblk)  , Av       (:,:,iblk)) 
