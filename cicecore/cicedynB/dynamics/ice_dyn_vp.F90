@@ -714,8 +714,9 @@
          Fy           ! y residual vector, Fy = by - Av
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4):: &
-         zetaD      ! zetaD = 2zeta (viscous coeff)
-
+         zetaD    , & ! zetaD = 2zeta (viscous coeff)
+         etaD         ! etaD  = 2eta  (viscous coeff)
+         
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          stPrtmp,   & ! doit etre (nx_block,ny_block,max_blocks,8)???? PAs besoin des 2? reuse?
          Dstrtmp
@@ -754,7 +755,7 @@
             uprev_k(:,:,iblk) = uvel(:,:,iblk)
             vprev_k(:,:,iblk) = vvel(:,:,iblk)
       
-            call calc_zeta_Pr (nx_block           , ny_block,           &
+            call calc_viscoeff_Pr (nx_block           , ny_block,           &
                                icellt(iblk),                            & 
                                indxti   (:,iblk)  , indxtj(:,iblk),     & 
                                uprev_k  (:,:,iblk), vprev_k (:,:,iblk), & 
@@ -762,8 +763,8 @@
                                dxhy     (:,:,iblk), dyhx  (:,:,iblk),   & 
                                cxp      (:,:,iblk), cyp   (:,:,iblk),   & 
                                cxm      (:,:,iblk), cym   (:,:,iblk),   & 
-                               tinyarea (:,:,iblk),                     & 
-                               strength (:,:,iblk), zetaD (:,:,iblk,:) ,&
+                               tinyarea (:,:,iblk), strength (:,:,iblk),& 
+                               zetaD (:,:,iblk,:) , etaD (:,:,iblk,:)  ,&
                                stPrtmp  (:,:,:) )                      
       
             call calc_vrel_Cb (nx_block           , ny_block,           &
@@ -1148,7 +1149,8 @@
          soly         ! solution of FGMRES (y components)
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4):: &
-         zetaD        ! zetaD = 2zeta (viscous coeff)
+         zetaD    , & ! zetaD = 2zeta (viscous coeff)
+         etaD         ! etaD  = 2eta  (viscous coeff)
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          stPrtmp,   & ! doit etre (nx_block,ny_block,max_blocks,8)???? PAs besoin des 2? reuse?
@@ -1216,7 +1218,7 @@
             uprev_k(:,:,iblk) = uvel(:,:,iblk)
             vprev_k(:,:,iblk) = vvel(:,:,iblk)
             
-            call calc_zeta_Pr (nx_block           , ny_block,           &
+            call calc_viscoeff_Pr (nx_block           , ny_block,           &
                                icellt(iblk),                            & 
                                indxti   (:,iblk)  , indxtj(:,iblk),     & 
                                uprev_k  (:,:,iblk), vprev_k (:,:,iblk), & 
@@ -1224,9 +1226,9 @@
                                dxhy     (:,:,iblk), dyhx  (:,:,iblk),   & 
                                cxp      (:,:,iblk), cyp   (:,:,iblk),   & 
                                cxm      (:,:,iblk), cym   (:,:,iblk),   & 
-                               tinyarea (:,:,iblk),                     & 
-                               strength (:,:,iblk), zetaD (:,:,iblk,:) ,&
-                               stPrtmp  (:,:,:) )                      
+                               tinyarea (:,:,iblk), strength (:,:,iblk),& 
+                               zetaD (:,:,iblk,:) , etaD (:,:,iblk,:)  ,&
+                               stPrtmp  (:,:,:) )                   
             
             call calc_vrel_Cb (nx_block           , ny_block,           &
                                icellu       (iblk), Cdn_ocn (:,:,iblk), & 
@@ -1716,7 +1718,7 @@
 
 ! Computes the viscous coefficients (in fact zetaD=2*zeta) and dPr/dx. 
 
-      subroutine calc_zeta_Pr  (nx_block,   ny_block,   & 
+      subroutine calc_viscoeff_Pr  (nx_block,   ny_block,   & 
                                 icellt,                 & 
                                 indxti,     indxtj,     & 
                                 uvel,       vvel,       & 
@@ -1724,8 +1726,8 @@
                                 dxhy,       dyhx,       & 
                                 cxp,        cyp,        & 
                                 cxm,        cym,        & 
-                                tinyarea,               & 
-                                strength,   zetaD,      &
+                                tinyarea,   strength,   & 
+                                zetaD,      etaD,       &
                                 stPr)
 
       use ice_dyn_shared, only: strain_rates
@@ -1755,7 +1757,8 @@
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,4), & 
          intent(out) :: &
-         zetaD          ! 2*zeta
+         zetaD    , & ! 2*zeta
+	 etaD         ! 2*eta
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,8), & 
          intent(out) :: &
@@ -1778,7 +1781,7 @@
         
       logical :: capping ! of the viscous coeff  
 
-      character(len=*), parameter :: subname = '(calc_zeta_Pr)'
+      character(len=*), parameter :: subname = '(calc_viscoeff_Pr)'
 
       capping = .false.
       
@@ -1899,7 +1902,7 @@
 
       enddo                     ! ij
 
-      end subroutine calc_zeta_Pr      
+      end subroutine calc_viscoeff_Pr      
       
 !=======================================================================
 
