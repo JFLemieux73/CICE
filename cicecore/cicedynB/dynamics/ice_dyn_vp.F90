@@ -1720,7 +1720,7 @@
 
 !=======================================================================
 
-! Computes the viscous coefficients (in fact zetaD=2*zeta) and dPr/dx. 
+! Computes the viscous coefficients (in fact zetaD=2*zeta) and 1/2*dPr/dx. 
 
       subroutine calc_viscoeff_Pr  (nx_block,   ny_block,   & 
                                 icellt,                 & 
@@ -1734,7 +1734,7 @@
                                 zetaD,      etaD,       &
                                 stPr)
 
-      use ice_dyn_shared, only: strain_rates
+      use ice_dyn_shared, only: strain_rates, yield_curve
 
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1815,39 +1815,58 @@
                             Deltane,    Deltanw,    &
                             Deltase,    Deltasw     )
 
-         if (capping) then
+         if (trim(yield_curve) == 'ellipse') then
+                            
+            if (capping) then
          
-          zetaD(i,j,1) = strength(i,j)/max(Deltane,tinyarea(i,j))
-          zetaD(i,j,2) = strength(i,j)/max(Deltanw,tinyarea(i,j))
-          zetaD(i,j,3) = strength(i,j)/max(Deltasw,tinyarea(i,j))
-          zetaD(i,j,4) = strength(i,j)/max(Deltase,tinyarea(i,j))
+             zetaD(i,j,1) = strength(i,j)/max(Deltane,tinyarea(i,j))
+             zetaD(i,j,2) = strength(i,j)/max(Deltanw,tinyarea(i,j))
+             zetaD(i,j,3) = strength(i,j)/max(Deltasw,tinyarea(i,j))
+             zetaD(i,j,4) = strength(i,j)/max(Deltase,tinyarea(i,j))
           
-         else
+            else
 
-          zetaD(i,j,1) = strength(i,j)/(Deltane + tinyarea(i,j))
-          zetaD(i,j,2) = strength(i,j)/(Deltanw + tinyarea(i,j))
-          zetaD(i,j,3) = strength(i,j)/(Deltasw + tinyarea(i,j))
-          zetaD(i,j,4) = strength(i,j)/(Deltase + tinyarea(i,j))
+             zetaD(i,j,1) = strength(i,j)/(Deltane + tinyarea(i,j))
+             zetaD(i,j,2) = strength(i,j)/(Deltanw + tinyarea(i,j))
+             zetaD(i,j,3) = strength(i,j)/(Deltasw + tinyarea(i,j))
+             zetaD(i,j,4) = strength(i,j)/(Deltase + tinyarea(i,j))
+         
+            endif
+         
+            etaD(i,j,1) = ecci*zetaD(i,j,1)
+            etaD(i,j,2) = ecci*zetaD(i,j,2)
+            etaD(i,j,3) = ecci*zetaD(i,j,3)
+            etaD(i,j,4) = ecci*zetaD(i,j,4)
+            
+            stressp_1 = -zetaD(i,j,1)*(Deltane*(c1-Ktens)) !rep pressure (2xPr) 
+            stressp_2 = -zetaD(i,j,2)*(Deltanw*(c1-Ktens))
+            stressp_3 = -zetaD(i,j,3)*(Deltasw*(c1-Ktens))
+            stressp_4 = -zetaD(i,j,4)*(Deltase*(c1-Ktens))
+            
+         elseif (trim(yield_curve) == 'MohrCoulomb') then
+         
+            if (capping) then
+         
+             zetaD(i,j,1) = strength(i,j)/max(divune,tinyarea(i,j))
+             zetaD(i,j,2) = strength(i,j)/max(divunw,tinyarea(i,j))
+             zetaD(i,j,3) = strength(i,j)/max(divusw,tinyarea(i,j))
+             zetaD(i,j,4) = strength(i,j)/max(divuse,tinyarea(i,j))
           
+            else
+
+             zetaD(i,j,1) = strength(i,j)/(divune + tinyarea(i,j))
+             zetaD(i,j,2) = strength(i,j)/(divunw + tinyarea(i,j))
+             zetaD(i,j,3) = strength(i,j)/(divusw + tinyarea(i,j))
+             zetaD(i,j,4) = strength(i,j)/(divuse + tinyarea(i,j))
+         
+            endif
+            
+            !etaD+Pr not coded yet
          
          endif
          
-         etaD(i,j,1) = ecci*zetaD(i,j,1) ! ellipse
-         etaD(i,j,2) = ecci*zetaD(i,j,2)
-         etaD(i,j,3) = ecci*zetaD(i,j,3)
-         etaD(i,j,4) = ecci*zetaD(i,j,4)
-         
       !-----------------------------------------------------------------
-      ! the stresses                            ! kg/s^2
       ! (1) northeast, (2) northwest, (3) southwest, (4) southeast
-      !-----------------------------------------------------------------
-
-         stressp_1 = -zetaD(i,j,1)*(Deltane*(c1-Ktens))
-         stressp_2 = -zetaD(i,j,2)*(Deltanw*(c1-Ktens))
-         stressp_3 = -zetaD(i,j,3)*(Deltasw*(c1-Ktens))
-         stressp_4 = -zetaD(i,j,4)*(Deltase*(c1-Ktens))
-         
-      !-----------------------------------------------------------------
       ! combinations of the Pr related stresses for the momentum equation ! kg/s^2
       !-----------------------------------------------------------------
 
@@ -2863,7 +2882,7 @@
          taux = vrel(i,j)*waterx(i,j) ! NOTE this is not the entire
          tauy = vrel(i,j)*watery(i,j) ! ocn stress term
          
-         ! divergence of the internal stress tensor (only Pr part, i.e. dPr/dx)
+         ! divergence of the internal stress tensor (only Pr part, i.e. -1/2*dPr/dx)
          strintx = uarear(i,j)* &
              (stPr(i,j,1) + stPr(i+1,j,2) + stPr(i,j+1,3) + stPr(i+1,j+1,4))
          strinty = uarear(i,j)* &
