@@ -779,14 +779,13 @@
             call calc_bvec (nx_block           , ny_block,           &
                             icellu       (iblk),                     & 
                             indxui     (:,iblk), indxuj    (:,iblk), &
-                            stPrtmp  (:,:,:)   , Cdn_ocn (:,:,iblk), &
+                            stPrtmp  (:,:,:)   ,                     &
                             aiu      (:,:,iblk), uarear  (:,:,iblk), & 
-                            uocn     (:,:,iblk), vocn    (:,:,iblk), &     
                             waterx   (:,:,iblk), watery  (:,:,iblk), & 
-                            uprev_k  (:,:,iblk), vprev_k (:,:,iblk), & 
                             bxfix    (:,:,iblk), byfix   (:,:,iblk), &
                             bx       (:,:,iblk), by      (:,:,iblk), &
                             vrel     (:,:,iblk))
+      
       
       !     prepare precond matrix
            if (precond .gt. 1) then
@@ -1243,15 +1242,13 @@
             call calc_bvec (nx_block           , ny_block,           &
                             icellu       (iblk),                     & 
                             indxui     (:,iblk), indxuj    (:,iblk), &
-                            stPrtmp  (:,:,:)   , Cdn_ocn (:,:,iblk), &
+                            stPrtmp  (:,:,:)   ,                     &
                             aiu      (:,:,iblk), uarear  (:,:,iblk), & 
-                            uocn     (:,:,iblk), vocn    (:,:,iblk), &     
                             waterx   (:,:,iblk), watery  (:,:,iblk), & 
-                            ulin     (:,:,iblk), vlin    (:,:,iblk), &
                             bxfix    (:,:,iblk), byfix   (:,:,iblk), &
                             bx       (:,:,iblk), by      (:,:,iblk), &
                             vrel     (:,:,iblk))
-            
+                            
             ! Compute nonlinear residual norm (PDE residual)
             call matvec (nx_block             , ny_block,            &
                          icellu   (iblk)      , icellt   (iblk)    , &
@@ -2808,11 +2805,9 @@
       subroutine calc_bvec (nx_block,   ny_block, &
                        icellu,               &
                        indxui,     indxuj,   &
-                       stPr,       Cw,       &
+                       stPr,                 &
                        aiu,        uarear,   &
-                       uocn,       vocn,     &
                        waterx,     watery,   &
-                       uvel,       vvel,     &
                        bxfix,      byfix,    &
                        bx,         by,       &
                        vrel)
@@ -2827,17 +2822,12 @@
          indxuj      ! compressed index in j-direction
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
-         uvel    , & ! x-component of velocity (m/s)
-         vvel    , & ! y-component of velocity (m/s)
-         Cw      , & ! ocean-ice neutral drag coefficient
          aiu     , & ! ice fraction on u-grid
          uarear  , & ! 1/uarea
          waterx  , & ! for ocean stress calculation, x (m/s)
          watery  , & ! for ocean stress calculation, y (m/s)
          bxfix   , & ! bx = taux + bxfix !jfl
          byfix   , & ! by = tauy + byfix !jfl
-         uocn    , & ! ocean current, x-direction (m/s)
-         vocn    , & ! ocean current, y-direction (m/s)
          vrel        ! relative ice-ocean velocity
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,8), &
@@ -2855,7 +2845,6 @@
          i, j, ij
 
       real (kind=dbl_kind) :: &
-         utp, vtp          , & ! utp = uvel, vtp = vvel !jfl needed?
          taux, tauy        , & ! part of ocean stress term
          strintx, strinty  , & ! divergence of the internal stress tensor (only Pr part)
          rhow                  !
@@ -2874,9 +2863,6 @@
       do ij =1, icellu
          i = indxui(ij)
          j = indxuj(ij)
-
-         utp = uvel(i,j)
-         vtp = vvel(i,j)
 
          ! ice/ocean stress
          taux = vrel(i,j)*waterx(i,j) ! NOTE this is not the entire
