@@ -1772,19 +1772,23 @@
 
       real (kind=dbl_kind) :: &
         divune, divunw, divuse, divusw                , & ! divergence
+        adivune, adivunw, adivuse, adivusw            , & ! |div|
         tensionne, tensionnw, tensionse, tensionsw    , & ! tension
         shearne, shearnw, shearse, shearsw            , & ! shearing
         Deltane, Deltanw, Deltase, Deltasw            , & ! Delt
+        mshearne, mshearnw, mshearse, mshearsw        , & ! Max shear, eps_s EC5 p.17
         ssigpn, ssigps, ssigpe, ssigpw, ssigp1, ssigp2, &
         csigpne, csigpnw, csigpsw, csigpse            , &
         stressp_1, stressp_2, stressp_3, stressp_4    , &
-        strp_tmp
+        strp_tmp                                      , &
+        sinphi
         
       logical :: capping ! of the viscous coeff  
 
       character(len=*), parameter :: subname = '(calc_viscoeff_Pr)'
 
       capping = .false.
+      sinphi=p5
       
 !DIR$ CONCURRENT !Cray
 !cdir nodep      !NEC
@@ -1797,7 +1801,7 @@
       ! strain rates
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
-         call strain_rates (nx_block,   ny_block,   &
+         call strain_rates (nx_block,   ny_block,   & ! trop de calc...e.g. shear not needed here
                             i,          j,          &
                             uvel,       vvel,       &
                             dxt,        dyt,        &
@@ -1835,30 +1839,55 @@
             etaD(i,j,3) = ecci*zetaD(i,j,3)
             etaD(i,j,4) = ecci*zetaD(i,j,4)
             
-            stressp_1 = -zetaD(i,j,1)*(Deltane*(c1-Ktens)) !rep pressure (2xPr) 
+            stressp_1 = -zetaD(i,j,1)*(Deltane*(c1-Ktens)) !rep pressure (-Pr) 
             stressp_2 = -zetaD(i,j,2)*(Deltanw*(c1-Ktens))
             stressp_3 = -zetaD(i,j,3)*(Deltasw*(c1-Ktens))
             stressp_4 = -zetaD(i,j,4)*(Deltase*(c1-Ktens))
             
          elseif (trim(yield_curve) == 'MohrCoulomb') then
          
+	    adivune = abs(divune)
+	    adivunw = abs(divunw)
+	    adivusw = abs(divusw)
+	    adivuse = abs(divuse)
+	    
+	    ! Max shear, eps_s = 0.5*[(e_11 - e_22)^2 + (e_12)^2]^0.5
+            mshearne = p5*sqrt(tensionne**2 + shearne**2)
+            mshearnw = p5*sqrt(tensionnw**2 + shearnw**2)
+            mshearsw = p5*sqrt(tensionsw**2 + shearsw**2)
+            mshearse = p5*sqrt(tensionse**2 + shearse**2)
+         
             if (capping) then
          
-             zetaD(i,j,1) = strength(i,j)/max(divune,tinyarea(i,j))
-             zetaD(i,j,2) = strength(i,j)/max(divunw,tinyarea(i,j))
-             zetaD(i,j,3) = strength(i,j)/max(divusw,tinyarea(i,j))
-             zetaD(i,j,4) = strength(i,j)/max(divuse,tinyarea(i,j))
+             zetaD(i,j,1) = strength(i,j)/max(adivune,tinyarea(i,j))
+             zetaD(i,j,2) = strength(i,j)/max(adivunw,tinyarea(i,j))
+             zetaD(i,j,3) = strength(i,j)/max(adivusw,tinyarea(i,j))
+             zetaD(i,j,4) = strength(i,j)/max(adivuse,tinyarea(i,j))
+             
+             etaD(i,j,1) = zetaD(i,j,1)*p5*(adivune - divune)*sinphi/max(mshearne,tinyarea(i,j))
+             etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*sinphi/max(mshearnw,tinyarea(i,j))
+             etaD(i,j,3) = zetaD(i,j,3)*p5*(adivusw - divusw)*sinphi/max(mshearsw,tinyarea(i,j))
+             etaD(i,j,4) = zetaD(i,j,4)*p5*(adivuse - divuse)*sinphi/max(mshearse,tinyarea(i,j))
           
             else
 
-             zetaD(i,j,1) = strength(i,j)/(divune + tinyarea(i,j))
-             zetaD(i,j,2) = strength(i,j)/(divunw + tinyarea(i,j))
-             zetaD(i,j,3) = strength(i,j)/(divusw + tinyarea(i,j))
-             zetaD(i,j,4) = strength(i,j)/(divuse + tinyarea(i,j))
+             zetaD(i,j,1) = strength(i,j)/(adivune + tinyarea(i,j))
+             zetaD(i,j,2) = strength(i,j)/(adivunw + tinyarea(i,j))
+             zetaD(i,j,3) = strength(i,j)/(adivusw + tinyarea(i,j))
+             zetaD(i,j,4) = strength(i,j)/(adivuse + tinyarea(i,j))
+             
+             etaD(i,j,1) = zetaD(i,j,1)*p5*(adivune - divune)*sinphi/(mshearne + tinyarea(i,j))
+             etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*sinphi/(mshearnw + tinyarea(i,j))
+             etaD(i,j,3) = zetaD(i,j,3)*p5*(adivusw - divusw)*sinphi/(mshearsw + tinyarea(i,j))
+             etaD(i,j,4) = zetaD(i,j,4)*p5*(adivuse - divuse)*sinphi/(mshearse + tinyarea(i,j))
          
             endif
             
-            !etaD+Pr not coded yet
+            ! need to check if Ktens is well coded for MC...
+            stressp_1 = -zetaD(i,j,1)*(adivune*(c1-Ktens)) !rep pressure (-Pr) 
+            stressp_2 = -zetaD(i,j,2)*(adivunw*(c1-Ktens))
+            stressp_3 = -zetaD(i,j,3)*(adivusw*(c1-Ktens))
+            stressp_4 = -zetaD(i,j,4)*(adivuse*(c1-Ktens))
          
          endif
          
