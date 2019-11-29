@@ -650,7 +650,10 @@
       use ice_boundary, only: ice_HaloUpdate
       use ice_domain, only: halo_info, maskhalo_dyn
       use ice_domain_size, only: max_blocks
-      use ice_flux, only: uocn, vocn, fm, Tbu
+      use ice_flux, only: uocn, vocn, fm, Tbu,        & 
+          stressp_1, stressp_2, stressp_3, stressp_4, & ! JFL...hum pas sur que cest la meilleure facon
+          stressm_1, stressm_2, stressm_3, stressm_4, &
+          stress12_1, stress12_2, stress12_3, stress12_4
       use ice_grid, only: dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
           tarear, uarear, tinyarea
       use ice_state, only: uvel, vvel, strength
@@ -1062,21 +1065,21 @@
 
          !$OMP PARALLEL DO PRIVATE(iblk)
          do iblk = 1, nblocks
-!             call stress_vp (nx_block,             ny_block,             & 
-!                             icellt(iblk),                               &
-!                             indxti      (:,iblk), indxtj      (:,iblk), & 
-!                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
-!                             dxt      (:,:,iblk)  , dyt      (:,:,iblk), & 
-!                             dxhy     (:,:,iblk)  , dyhx     (:,:,iblk), & 
-!                             cxp      (:,:,iblk)  , cyp      (:,:,iblk), & 
-!                             cxm      (:,:,iblk)  , cym      (:,:,iblk), &
-!                             zetaDprev_k(:,:,iblk,:),etaDprev_k(:,:,iblk,:),&
-!                             stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
-!                             stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
-!                             stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
-!                             stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
-!                             stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
-!                             stress12_3(:,:,iblk), stress12_4(:,:,iblk))
+             call stress_vp (nx_block,             ny_block,             & 
+                             icellt(iblk),                               &
+                             indxti      (:,iblk), indxtj      (:,iblk), & 
+                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
+                             dxt      (:,:,iblk)  , dyt      (:,:,iblk), & 
+                             dxhy     (:,:,iblk)  , dyhx     (:,:,iblk), & 
+                             cxp      (:,:,iblk)  , cyp      (:,:,iblk), & 
+                             cxm      (:,:,iblk)  , cym      (:,:,iblk), &
+                             zetaDprev_k(:,:,iblk,:),etaDprev_k(:,:,iblk,:),&
+                             stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
+                             stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
+                             stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
+                             stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
+                             stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
+                             stress12_3(:,:,iblk), stress12_4(:,:,iblk))
   
          enddo
          !$OMP END PARALLEL DO
@@ -1108,7 +1111,10 @@
       use ice_constants, only: c1
       use ice_domain, only: halo_info, maskhalo_dyn
       use ice_domain_size, only: max_blocks
-      use ice_flux, only:   uocn, vocn, fm, Tbu
+      use ice_flux, only: uocn, vocn, fm, Tbu,        & 
+          stressp_1, stressp_2, stressp_3, stressp_4, & ! JFL...hum pas sur que cest la meilleure facon
+          stressm_1, stressm_2, stressm_3, stressm_4, &
+          stress12_1, stress12_2, stress12_3, stress12_4
       use ice_grid, only: dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
           uarear, tinyarea
       use ice_state, only: uvel, vvel, strength
@@ -1558,21 +1564,21 @@
 
          !$OMP PARALLEL DO PRIVATE(iblk)
          do iblk = 1, nblocks
-!             call stress_vp (nx_block,             ny_block,             & 
-!                             icellt(iblk),                               &
-!                             indxti      (:,iblk), indxtj      (:,iblk), & 
-!                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
-!                             dxt      (:,:,iblk)  , dyt      (:,:,iblk), & 
-!                             dxhy     (:,:,iblk)  , dyhx     (:,:,iblk), & 
-!                             cxp      (:,:,iblk)  , cyp      (:,:,iblk), & 
-!                             cxm      (:,:,iblk)  , cym      (:,:,iblk), &
-!                             zetaDprev_k(:,:,iblk,:),etaDprev_k(:,:,iblk,:),&
-!                             stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
-!                             stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
-!                             stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
-!                             stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
-!                             stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
-!                             stress12_3(:,:,iblk), stress12_4(:,:,iblk))
+            call stress_vp (nx_block,             ny_block,             & 
+                            icellt(iblk),                               &
+                            indxti      (:,iblk), indxtj      (:,iblk), & 
+                            uvel      (:,:,iblk), vvel      (:,:,iblk), &
+                            dxt      (:,:,iblk)  , dyt      (:,:,iblk), & 
+                            dxhy     (:,:,iblk)  , dyhx     (:,:,iblk), & 
+                            cxp      (:,:,iblk)  , cyp      (:,:,iblk), & 
+                            cxm      (:,:,iblk)  , cym      (:,:,iblk), &
+                            zetaDprev_k(:,:,iblk,:),etaDprev_k(:,:,iblk,:),&
+                            stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
+                            stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
+                            stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
+                            stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
+                            stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
+                            stress12_3(:,:,iblk), stress12_4(:,:,iblk))
 
          enddo
          !$OMP END PARALLEL DO
