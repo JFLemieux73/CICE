@@ -714,8 +714,10 @@
          Fy           ! y residual vector, Fy = by - Av
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4):: &
-         zetaD    , & ! zetaD = 2zeta (viscous coeff)
-         etaD         ! etaD  = 2eta  (viscous coeff)
+         zetaD      , & ! zetaD = 2zeta (viscous coeff)
+         etaD       , & ! etaD  = 2eta  (viscous coeff)
+         zetaDprev_k, & ! prev OL iteration zetaD
+         etaDprev_k     ! prev OL iteration etaD
          
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          stPrtmp,   & ! doit etre (nx_block,ny_block,max_blocks,8)???? PAs besoin des 2? reuse?
@@ -754,6 +756,8 @@
       
             uprev_k(:,:,iblk) = uvel(:,:,iblk)
             vprev_k(:,:,iblk) = vvel(:,:,iblk)
+            zetaDprev_k(:,:,iblk,:) = zetaD(:,:,iblk,:)
+            etaDprev_k(:,:,iblk,:)  = etaD(:,:,iblk,:)
       
             call calc_viscoeff_Pr (nx_block           , ny_block,           &
                                icellt(iblk),                            & 
@@ -1052,6 +1056,31 @@
       ! deallocate FGMRES work arrays
       deallocate(wk11, wk22, vv, ww)
 
+      !-----------------------------------------------------------------------
+      !     Compute VP stresses based on u,v solution
+      !-----------------------------------------------------------------------
+
+         !$OMP PARALLEL DO PRIVATE(iblk)
+         do iblk = 1, nblocks
+!             call stress_vp (nx_block,             ny_block,             & 
+!                             icellt(iblk),                               &
+!                             indxti      (:,iblk), indxtj      (:,iblk), & 
+!                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
+!                             dxt      (:,:,iblk)  , dyt      (:,:,iblk), & 
+!                             dxhy     (:,:,iblk)  , dyhx     (:,:,iblk), & 
+!                             cxp      (:,:,iblk)  , cyp      (:,:,iblk), & 
+!                             cxm      (:,:,iblk)  , cym      (:,:,iblk), &
+!                             zetaDprev_k(:,:,iblk,:),etaDprev_k(:,:,iblk,:),&
+!                             stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
+!                             stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
+!                             stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
+!                             stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
+!                             stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
+!                             stress12_3(:,:,iblk), stress12_4(:,:,iblk))
+  
+         enddo
+         !$OMP END PARALLEL DO
+
       end subroutine picard_solver
 
 !=======================================================================
@@ -1149,8 +1178,10 @@
          soly         ! solution of FGMRES (y components)
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks,4):: &
-         zetaD    , & ! zetaD = 2zeta (viscous coeff)
-         etaD         ! etaD  = 2eta  (viscous coeff)
+         zetaD      , & ! zetaD = 2zeta (viscous coeff)
+         etaD       , & ! etaD  = 2eta  (viscous coeff)
+         zetaDprev_k, & ! prev OL iteration zetaD
+         etaDprev_k     ! prev OL iteration etaD
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          stPrtmp,   & ! doit etre (nx_block,ny_block,max_blocks,8)???? PAs besoin des 2? reuse?
@@ -1217,6 +1248,8 @@
             endif
             uprev_k(:,:,iblk) = uvel(:,:,iblk)
             vprev_k(:,:,iblk) = vvel(:,:,iblk)
+            zetaDprev_k(:,:,iblk,:) = zetaD(:,:,iblk,:)
+            etaDprev_k(:,:,iblk,:)  = etaD(:,:,iblk,:)
             
             call calc_viscoeff_Pr (nx_block           , ny_block,           &
                                icellt(iblk),                            & 
@@ -1519,6 +1552,31 @@
          
       enddo ! nonlinear iteration loop
       
+      !-----------------------------------------------------------------------
+      !     Compute VP stresses based on u,v solution
+      !-----------------------------------------------------------------------
+
+         !$OMP PARALLEL DO PRIVATE(iblk)
+         do iblk = 1, nblocks
+!             call stress_vp (nx_block,             ny_block,             & 
+!                             icellt(iblk),                               &
+!                             indxti      (:,iblk), indxtj      (:,iblk), & 
+!                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
+!                             dxt      (:,:,iblk)  , dyt      (:,:,iblk), & 
+!                             dxhy     (:,:,iblk)  , dyhx     (:,:,iblk), & 
+!                             cxp      (:,:,iblk)  , cyp      (:,:,iblk), & 
+!                             cxm      (:,:,iblk)  , cym      (:,:,iblk), &
+!                             zetaDprev_k(:,:,iblk,:),etaDprev_k(:,:,iblk,:),&
+!                             stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
+!                             stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
+!                             stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
+!                             stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
+!                             stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
+!                             stress12_3(:,:,iblk), stress12_4(:,:,iblk))
+
+         enddo
+         !$OMP END PARALLEL DO
+
       end subroutine anderson_solver
 
 !=======================================================================
@@ -1976,10 +2034,9 @@
                             stressm_1,  stressm_2,  & 
                             stressm_3,  stressm_4,  & 
                             stress12_1, stress12_2, & 
-                            stress12_3, stress12_4, & 
-                            str )
+                            stress12_3, stress12_4)
 
-      use ice_dyn_shared, only: strain_rates
+      use ice_dyn_shared, only: strain_rates, yield_curve
 
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -2013,10 +2070,6 @@
          stressm_1, stressm_2, stressm_3, stressm_4 , & ! sigma11-sigma22
          stress12_1,stress12_2,stress12_3,stress12_4    ! sigma12
 
-      real (kind=dbl_kind), dimension(nx_block,ny_block,8), & 
-         intent(out) :: &
-         str          ! stress combinations
-
       ! local variables
 
       integer (kind=int_kind) :: &
@@ -2024,26 +2077,12 @@
 
       real (kind=dbl_kind) :: &
         divune, divunw, divuse, divusw            , & ! divergence
+        adivune, adivunw, adivuse, adivusw        , & ! |div|
         tensionne, tensionnw, tensionse, tensionsw, & ! tension
         shearne, shearnw, shearse, shearsw        , & ! shearing
-        Deltane, Deltanw, Deltase, Deltasw        , & ! Delt
-        ssigpn, ssigps, ssigpe, ssigpw            , &
-        ssigmn, ssigms, ssigme, ssigmw            , &
-        ssig12n, ssig12s, ssig12e, ssig12w        , &
-        ssigp1, ssigp2, ssigm1, ssigm2, ssig121, ssig122, &
-        csigpne, csigpnw, csigpse, csigpsw        , &
-        csigmne, csigmnw, csigmse, csigmsw        , &
-        csig12ne, csig12nw, csig12se, csig12sw    , &
-        str12ew, str12we, str12ns, str12sn        , &
-        strp_tmp, strm_tmp
+        Deltane, Deltanw, Deltase, Deltasw            ! Delta
 
         character(len=*), parameter :: subname = '(stress_vp)'
-
-      !-----------------------------------------------------------------
-      ! Initialize
-      !-----------------------------------------------------------------
-
-      str(:,:,:) = c0
 
 !DIR$ CONCURRENT !Cray
 !cdir nodep      !NEC
@@ -2077,119 +2116,41 @@
       ! (1) northeast, (2) northwest, (3) southwest, (4) southeast
       !-----------------------------------------------------------------
 
-         stressp_1(i,j) = zetaD(i,j,1)*(divune*(c1+Ktens) - Deltane*(c1-Ktens))
-         stressp_2(i,j) = zetaD(i,j,2)*(divunw*(c1+Ktens) - Deltanw*(c1-Ktens))
-         stressp_3(i,j) = zetaD(i,j,3)*(divusw*(c1+Ktens) - Deltasw*(c1-Ktens))
-         stressp_4(i,j) = zetaD(i,j,4)*(divuse*(c1+Ktens) - Deltase*(c1-Ktens))
+         if (trim(yield_curve) == 'ellipse') then
+
+            stressp_1(i,j) = zetaD(i,j,1)*(divune*(c1+Ktens) - Deltane*(c1-Ktens))
+            stressp_2(i,j) = zetaD(i,j,2)*(divunw*(c1+Ktens) - Deltanw*(c1-Ktens))
+            stressp_3(i,j) = zetaD(i,j,3)*(divusw*(c1+Ktens) - Deltasw*(c1-Ktens))
+            stressp_4(i,j) = zetaD(i,j,4)*(divuse*(c1+Ktens) - Deltase*(c1-Ktens))
          
-         stressm_1(i,j) = etaD(i,j,1)*tensionne*(c1+Ktens)
-         stressm_2(i,j) = etaD(i,j,2)*tensionnw*(c1+Ktens)
-         stressm_3(i,j) = etaD(i,j,3)*tensionsw*(c1+Ktens)
-         stressm_4(i,j) = etaD(i,j,4)*tensionse*(c1+Ktens)
+            stressm_1(i,j) = etaD(i,j,1)*tensionne*(c1+Ktens)
+            stressm_2(i,j) = etaD(i,j,2)*tensionnw*(c1+Ktens)
+            stressm_3(i,j) = etaD(i,j,3)*tensionsw*(c1+Ktens)
+            stressm_4(i,j) = etaD(i,j,4)*tensionse*(c1+Ktens)
          
-         stress12_1(i,j) = etaD(i,j,1)*shearne*p5*(c1+Ktens)
-         stress12_2(i,j) = etaD(i,j,2)*shearnw*p5*(c1+Ktens)
-         stress12_3(i,j) = etaD(i,j,3)*shearsw*p5*(c1+Ktens)
-         stress12_4(i,j) = etaD(i,j,4)*shearse*p5*(c1+Ktens)
+            stress12_1(i,j) = etaD(i,j,1)*shearne*p5*(c1+Ktens)
+            stress12_2(i,j) = etaD(i,j,2)*shearnw*p5*(c1+Ktens)
+            stress12_3(i,j) = etaD(i,j,3)*shearsw*p5*(c1+Ktens)
+            stress12_4(i,j) = etaD(i,j,4)*shearse*p5*(c1+Ktens)
 
-      !-----------------------------------------------------------------
-      ! combinations of the stresses for the momentum equation ! kg/s^2
-      !-----------------------------------------------------------------
+          elseif (trim(yield_curve) == 'MohrCoulomb') then
 
-         ssigpn  = stressp_1(i,j) + stressp_2(i,j)
-         ssigps  = stressp_3(i,j) + stressp_4(i,j)
-         ssigpe  = stressp_1(i,j) + stressp_4(i,j)
-         ssigpw  = stressp_2(i,j) + stressp_3(i,j)
-         ssigp1  =(stressp_1(i,j) + stressp_3(i,j))*p055
-         ssigp2  =(stressp_2(i,j) + stressp_4(i,j))*p055
-
-         ssigmn  = stressm_1(i,j) + stressm_2(i,j)
-         ssigms  = stressm_3(i,j) + stressm_4(i,j)
-         ssigme  = stressm_1(i,j) + stressm_4(i,j)
-         ssigmw  = stressm_2(i,j) + stressm_3(i,j)
-         ssigm1  =(stressm_1(i,j) + stressm_3(i,j))*p055
-         ssigm2  =(stressm_2(i,j) + stressm_4(i,j))*p055
-
-         ssig12n = stress12_1(i,j) + stress12_2(i,j)
-         ssig12s = stress12_3(i,j) + stress12_4(i,j)
-         ssig12e = stress12_1(i,j) + stress12_4(i,j)
-         ssig12w = stress12_2(i,j) + stress12_3(i,j)
-         ssig121 =(stress12_1(i,j) + stress12_3(i,j))*p111
-         ssig122 =(stress12_2(i,j) + stress12_4(i,j))*p111
-
-         csigpne = p111*stressp_1(i,j) + ssigp2 + p027*stressp_3(i,j)
-         csigpnw = p111*stressp_2(i,j) + ssigp1 + p027*stressp_4(i,j)
-         csigpsw = p111*stressp_3(i,j) + ssigp2 + p027*stressp_1(i,j)
-         csigpse = p111*stressp_4(i,j) + ssigp1 + p027*stressp_2(i,j)
+            stressp_1(i,j) = zetaD(i,j,1)*(divune*(c1+Ktens) - adivune*(c1-Ktens))
+            stressp_2(i,j) = zetaD(i,j,2)*(divunw*(c1+Ktens) - adivunw*(c1-Ktens))
+            stressp_3(i,j) = zetaD(i,j,3)*(divusw*(c1+Ktens) - adivusw*(c1-Ktens))
+            stressp_4(i,j) = zetaD(i,j,4)*(divuse*(c1+Ktens) - adivuse*(c1-Ktens))
          
-         csigmne = p111*stressm_1(i,j) + ssigm2 + p027*stressm_3(i,j)
-         csigmnw = p111*stressm_2(i,j) + ssigm1 + p027*stressm_4(i,j)
-         csigmsw = p111*stressm_3(i,j) + ssigm2 + p027*stressm_1(i,j)
-         csigmse = p111*stressm_4(i,j) + ssigm1 + p027*stressm_2(i,j)
+            stressm_1(i,j) = etaD(i,j,1)*tensionne*(c1+Ktens)
+            stressm_2(i,j) = etaD(i,j,2)*tensionnw*(c1+Ktens)
+            stressm_3(i,j) = etaD(i,j,3)*tensionsw*(c1+Ktens)
+            stressm_4(i,j) = etaD(i,j,4)*tensionse*(c1+Ktens)
          
-         csig12ne = p222*stress12_1(i,j) + ssig122 &
-                  + p055*stress12_3(i,j)
-         csig12nw = p222*stress12_2(i,j) + ssig121 &
-                  + p055*stress12_4(i,j)
-         csig12sw = p222*stress12_3(i,j) + ssig122 &
-                  + p055*stress12_1(i,j)
-         csig12se = p222*stress12_4(i,j) + ssig121 &
-                  + p055*stress12_2(i,j)
+            stress12_1(i,j) = etaD(i,j,1)*shearne*p5*(c1+Ktens)
+            stress12_2(i,j) = etaD(i,j,2)*shearnw*p5*(c1+Ktens)
+            stress12_3(i,j) = etaD(i,j,3)*shearsw*p5*(c1+Ktens)
+            stress12_4(i,j) = etaD(i,j,4)*shearse*p5*(c1+Ktens)
 
-         str12ew = p5*dxt(i,j)*(p333*ssig12e + p166*ssig12w)
-         str12we = p5*dxt(i,j)*(p333*ssig12w + p166*ssig12e)
-         str12ns = p5*dyt(i,j)*(p333*ssig12n + p166*ssig12s)
-         str12sn = p5*dyt(i,j)*(p333*ssig12s + p166*ssig12n)
-
-      !-----------------------------------------------------------------
-      ! for dF/dx (u momentum)
-      !-----------------------------------------------------------------
-         strp_tmp  = p25*dyt(i,j)*(p333*ssigpn  + p166*ssigps)
-         strm_tmp  = p25*dyt(i,j)*(p333*ssigmn  + p166*ssigms)
-
-         ! northeast (i,j)
-         str(i,j,1) = -strp_tmp - strm_tmp - str12ew &
-              + dxhy(i,j)*(-csigpne + csigmne) + dyhx(i,j)*csig12ne
-
-         ! northwest (i+1,j)
-         str(i,j,2) = strp_tmp + strm_tmp - str12we &
-              + dxhy(i,j)*(-csigpnw + csigmnw) + dyhx(i,j)*csig12nw
-
-         strp_tmp  = p25*dyt(i,j)*(p333*ssigps  + p166*ssigpn)
-         strm_tmp  = p25*dyt(i,j)*(p333*ssigms  + p166*ssigmn)
-
-         ! southeast (i,j+1)
-         str(i,j,3) = -strp_tmp - strm_tmp + str12ew &
-              + dxhy(i,j)*(-csigpse + csigmse) + dyhx(i,j)*csig12se
-
-         ! southwest (i+1,j+1)
-         str(i,j,4) = strp_tmp + strm_tmp + str12we &
-              + dxhy(i,j)*(-csigpsw + csigmsw) + dyhx(i,j)*csig12sw
-
-      !-----------------------------------------------------------------
-      ! for dF/dy (v momentum)
-      !-----------------------------------------------------------------
-         strp_tmp  = p25*dxt(i,j)*(p333*ssigpe  + p166*ssigpw)
-         strm_tmp  = p25*dxt(i,j)*(p333*ssigme  + p166*ssigmw)
-
-         ! northeast (i,j)
-         str(i,j,5) = -strp_tmp + strm_tmp - str12ns &
-              - dyhx(i,j)*(csigpne + csigmne) + dxhy(i,j)*csig12ne
-
-         ! southeast (i,j+1)
-         str(i,j,6) = strp_tmp - strm_tmp - str12sn &
-              - dyhx(i,j)*(csigpse + csigmse) + dxhy(i,j)*csig12se
-
-         strp_tmp  = p25*dxt(i,j)*(p333*ssigpw  + p166*ssigpe)
-         strm_tmp  = p25*dxt(i,j)*(p333*ssigmw  + p166*ssigme)
-
-         ! northwest (i+1,j)
-         str(i,j,7) = -strp_tmp + strm_tmp + str12ns &
-              - dyhx(i,j)*(csigpnw + csigmnw) + dxhy(i,j)*csig12nw
-
-         ! southwest (i+1,j+1)
-         str(i,j,8) = strp_tmp - strm_tmp + str12sn &
-              - dyhx(i,j)*(csigpsw + csigmsw) + dxhy(i,j)*csig12sw
+          endif
 
       enddo                     ! ij
 
@@ -2197,7 +2158,7 @@
       
 !=======================================================================
 
-! Compute deformations for mechanical redistribution
+! Compute deformations for mechanical redistribution (JFL use strain rates routine???)
 
       subroutine deformations (nx_block,   ny_block,   & 
                                icellt,                 & 
@@ -2209,6 +2170,8 @@
                                tarear,                 & 
                                shear,      divu,       & 
                                rdg_conv,   rdg_shear )
+      
+      use ice_dyn_shared, only: yield_curve
 
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -2304,7 +2267,14 @@
       !-----------------------------------------------------------------
 
          divu(i,j) = p25*(divune + divunw + divuse + divusw) * tarear(i,j)
+
+         if (trim(yield_curve) == 'ellipse') then
             tmp = p25*(Deltane + Deltanw + Deltase + Deltasw)   * tarear(i,j)
+         elseif (trim(yield_curve) == 'MohrCoulomb') then
+            print *, "not coded yet" ! JFL check here
+            stop
+         endif
+         
             rdg_conv(i,j)  = -min(divu(i,j),c0)
             rdg_shear(i,j) = p5*(tmp-abs(divu(i,j))) 
 
