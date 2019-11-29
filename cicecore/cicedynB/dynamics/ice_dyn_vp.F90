@@ -139,7 +139,7 @@
          this_block           ! block information for current block
          
       real (kind=dbl_kind) :: &
-         puny_vp = 2e-09_dbl_kind      ! special puny value for computing tinyarea
+         puny_vp = 2e-09_dbl_kind      ! special puny value for computing tinyarea JFL watchout
       
       ! Initialize variables shared with evp
       call init_evp(dt)

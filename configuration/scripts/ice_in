@@ -106,6 +106,7 @@
     brlx            = 300.0
     arlx            = 300.0
     advection       = 'remap'
+    yield_curve     = 'ellipse'
     kstrength       = 1
     krdg_partic     = 1
     krdg_redist     = 1
