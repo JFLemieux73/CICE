@@ -1910,12 +1910,12 @@
             
          elseif (trim(yield_curve) == 'MohrCoulomb') then
          
-	    adivune = abs(divune)
-	    adivunw = abs(divunw)
-	    adivusw = abs(divusw)
-	    adivuse = abs(divuse)
-	    
-	    ! Max shear, eps_s = 0.5*[(e_11 - e_22)^2 + (e_12)^2]^0.5
+            adivune = abs(divune)
+            adivunw = abs(divunw)
+            adivusw = abs(divusw)
+            adivuse = abs(divuse)
+            
+            ! Max shear, eps_s = 0.5*[(e_11 - e_22)^2 + (e_12)^2]^0.5
             mshearne = p5*sqrt(tensionne**2 + shearne**2)
             mshearnw = p5*sqrt(tensionnw**2 + shearnw**2)
             mshearsw = p5*sqrt(tensionsw**2 + shearsw**2)
@@ -2141,6 +2141,11 @@
 
           elseif (trim(yield_curve) == 'MohrCoulomb') then
 
+            adivune = abs(divune)
+            adivunw = abs(divunw)
+            adivusw = abs(divusw)
+            adivuse = abs(divuse)
+          
             stressp_1(i,j) = zetaD(i,j,1)*(divune*(c1+Ktens) - adivune*(c1-Ktens))
             stressp_2(i,j) = zetaD(i,j,2)*(divunw*(c1+Ktens) - adivunw*(c1-Ktens))
             stressp_3(i,j) = zetaD(i,j,3)*(divusw*(c1+Ktens) - adivusw*(c1-Ktens))
@@ -2219,7 +2224,7 @@
         tmp
         
       character(len=*), parameter :: subname = '(deformations)'
-      
+
 !DIR$ CONCURRENT !Cray
 !cdir nodep      !NEC
 !ocl novrec      !Fujitsu
@@ -2277,8 +2282,9 @@
          if (trim(yield_curve) == 'ellipse') then
             tmp = p25*(Deltane + Deltanw + Deltase + Deltasw)   * tarear(i,j)
          elseif (trim(yield_curve) == 'MohrCoulomb') then
-            print *, "not coded yet" ! JFL check here
-            stop
+!            print *, "not coded yet" ! JFL NEED TO MODIF
+            tmp = p25*(Deltane + Deltanw + Deltase + Deltasw)   * tarear(i,j)
+!            stop
          endif
          
             rdg_conv(i,j)  = -min(divu(i,j),c0)
