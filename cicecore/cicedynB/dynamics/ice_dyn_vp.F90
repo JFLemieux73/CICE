@@ -1844,7 +1844,7 @@
         ssigpn, ssigps, ssigpe, ssigpw, ssigp1, ssigp2, &
         csigpne, csigpnw, csigpsw, csigpse            , &
         stressp_1, stressp_2, stressp_3, stressp_4    , &
-        strp_tmp                                      , &
+        strp_tmp, alphaf                              , &
         sinphi
         
       logical :: capping ! of the viscous coeff  
@@ -1853,6 +1853,7 @@
 
       capping = .false.
       sinphi=p5
+      alphaf=2d10
       
 !DIR$ CONCURRENT !Cray
 !cdir nodep      !NEC
@@ -1944,6 +1945,11 @@
              etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*sinphi/(mshearnw + tinyarea(i,j))
              etaD(i,j,3) = zetaD(i,j,3)*p5*(adivusw - divusw)*sinphi/(mshearsw + tinyarea(i,j))
              etaD(i,j,4) = zetaD(i,j,4)*p5*(adivuse - divuse)*sinphi/(mshearse + tinyarea(i,j))
+             
+!             etaD(i,j,1) = zetaD(i,j,1)*p5*(adivune - divune)*tanh(alphaf*(adivune - divune))*sinphi/(mshearne + tinyarea(i,j))
+!             etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*tanh(alphaf*(adivune - divune))*sinphi/(mshearnw + tinyarea(i,j))
+!             etaD(i,j,3) = zetaD(i,j,3)*p5*(adivusw - divusw)*tanh(alphaf*(adivune - divune))*sinphi/(mshearsw + tinyarea(i,j))
+!             etaD(i,j,4) = zetaD(i,j,4)*p5*(adivuse - divuse)*tanh(alphaf*(adivune - divune))*sinphi/(mshearse + tinyarea(i,j))
          
             endif
             
