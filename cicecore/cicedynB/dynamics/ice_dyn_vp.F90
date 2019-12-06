@@ -1845,15 +1845,20 @@
         csigpne, csigpnw, csigpsw, csigpse            , &
         stressp_1, stressp_2, stressp_3, stressp_4    , &
         strp_tmp, alphaf                              , &
-        sinphi
+        sinphi, aa, bb, dd, pne, pnw, pse, psw, qq, geta, qstar, &
+        ap, bp, dp 
         
-      logical :: capping ! of the viscous coeff  
+      logical :: capping, regularMC ! of the viscous coeff  
 
       character(len=*), parameter :: subname = '(calc_viscoeff_Pr)'
 
       capping = .false.
+      regularMC = .false.
       sinphi=p5
       alphaf=2d10
+      aa=0.02d0
+      bb=sinphi*aa
+      dd=aa
       
 !DIR$ CONCURRENT !Cray
 !cdir nodep      !NEC
@@ -1941,10 +1946,54 @@
              zetaD(i,j,3) = strength(i,j)/(adivusw + tinyarea(i,j))
              zetaD(i,j,4) = strength(i,j)/(adivuse + tinyarea(i,j))
              
-             etaD(i,j,1) = zetaD(i,j,1)*p5*(adivune - divune)*sinphi/(mshearne + tinyarea(i,j))
-             etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*sinphi/(mshearnw + tinyarea(i,j))
-             etaD(i,j,3) = zetaD(i,j,3)*p5*(adivusw - divusw)*sinphi/(mshearsw + tinyarea(i,j))
-             etaD(i,j,4) = zetaD(i,j,4)*p5*(adivuse - divuse)*sinphi/(mshearse + tinyarea(i,j))
+             if (regularMC) then
+             
+!----------------------------------------------------------------------------------------------------
+             
+!              etaD(i,j,1) = zetaD(i,j,1)*p5*(adivune - divune)*sinphi/(mshearne + tinyarea(i,j))
+!              etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*sinphi/(mshearnw + tinyarea(i,j))
+!              etaD(i,j,3) = zetaD(i,j,3)*p5*(adivusw - divusw)*sinphi/(mshearsw + tinyarea(i,j))
+!              etaD(i,j,4) = zetaD(i,j,4)*p5*(adivuse - divuse)*sinphi/(mshearse + tinyarea(i,j))
+
+!----------------------------------------------------------------------------------------------------
+
+! see Abbo_and_sloan_1995.pdf and pages 67-68 in EC5
+
+             else
+
+             ap=aa*strength(i,j)
+             bp=ap*sinphi
+             dp=dd*strength(i,j)
+
+             !ne
+             pne=zetaD(i,j,1)*p5*(adivune - divune)
+             qq = sinphi*pne + sinphi*ap
+             qstar = bp * ( sqrt( ((-pne-dp)/ap)**2 -1d0 ) )
+             geta = max(qstar/qq, 0d0)    
+             etaD(i,j,1) = geta*pne*sinphi/(mshearne + tinyarea(i,j))
+             
+             !nw
+             pnw=zetaD(i,j,2)*p5*(adivunw - divunw)
+             qq = sinphi*pnw + sinphi*ap
+             qstar = bp * ( sqrt( ((-pnw-dp)/ap)**2 -1d0 ) )
+             geta = max(qstar/qq, 0d0)               
+             etaD(i,j,2) = geta*pnw*sinphi/(mshearnw + tinyarea(i,j))
+             
+             !sw
+             psw=zetaD(i,j,3)*p5*(adivusw - divusw)
+             qq = sinphi*psw + sinphi*ap
+             qstar = bp * ( sqrt( ((-psw-dp)/ap)**2 -1d0 ) )
+             geta = max(qstar/qq, 0d0)     
+             etaD(i,j,3) = geta*psw*sinphi/(mshearsw + tinyarea(i,j))
+             
+             !se
+             pse=zetaD(i,j,4)*p5*(adivuse - divuse)
+             qq = sinphi*pse + sinphi*ap
+             qstar = bp * ( sqrt( ((-pse-dp)/ap)**2 -1d0 ) )
+             geta = max(qstar/qq, 0d0)   
+             etaD(i,j,4) = geta*pse*sinphi/(mshearse + tinyarea(i,j))
+            endif
+!----------------------------------------------------------------------------------------------------
              
 !             etaD(i,j,1) = zetaD(i,j,1)*p5*(adivune - divune)*tanh(alphaf*(adivune - divune))*sinphi/(mshearne + tinyarea(i,j))
 !             etaD(i,j,2) = zetaD(i,j,2)*p5*(adivunw - divunw)*tanh(alphaf*(adivune - divune))*sinphi/(mshearnw + tinyarea(i,j))
