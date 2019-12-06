@@ -705,6 +705,8 @@
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
          uprev_k  , & ! uvel at previous Picard iteration
          vprev_k  , & ! vvel at previous Picard iteration
+         ulin     , & ! uvel to linearize vrel
+         vlin     , & ! vvel to linearize vrel
          vrel     , & ! coeff for tauw 
          Cb       , & ! seabed stress coeff
          bx       , & ! b vector
@@ -747,6 +749,13 @@
       allocate(wk11(ntot), wk22(ntot))
       allocate(vv(ntot,im_fgmres+1), ww(ntot,im_fgmres))
       
+      !$OMP PARALLEL DO PRIVATE(iblk)
+      do iblk = 1, nblocks
+         uprev_k(:,:,iblk) = uvel(:,:,iblk)
+         vprev_k(:,:,iblk) = vvel(:,:,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+      
       ! Start iterations
       do kOL = 1,maxits_nonlin        ! outer loop 
       
@@ -756,6 +765,14 @@
       
       !$OMP PARALLEL DO PRIVATE(iblk)
          do iblk = 1, nblocks
+      
+            if (use_mean_vrel) then
+               ulin(:,:,iblk) = p5*uprev_k(:,:,iblk) + p5*uvel(:,:,iblk)
+               vlin(:,:,iblk) = p5*vprev_k(:,:,iblk) + p5*vvel(:,:,iblk)
+            else
+               ulin(:,:,iblk) = uvel(:,:,iblk)
+               vlin(:,:,iblk) = vvel(:,:,iblk)
+            endif
       
             uprev_k(:,:,iblk) = uvel(:,:,iblk)
             vprev_k(:,:,iblk) = vvel(:,:,iblk)
@@ -779,7 +796,7 @@
                                indxui     (:,iblk), indxuj    (:,iblk), &
                                aiu      (:,:,iblk), Tbu     (:,:,iblk), &
                                uocn     (:,:,iblk), vocn    (:,:,iblk), &     
-                               uprev_k  (:,:,iblk), vprev_k (:,:,iblk), & 
+                               ulin     (:,:,iblk), vlin    (:,:,iblk), & 
                                vrel     (:,:,iblk), Cb      (:,:,iblk))
       
       !     prepare b vector (RHS)                                                
