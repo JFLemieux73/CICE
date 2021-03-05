@@ -5096,31 +5096,38 @@
 
       period = c4*secday
 
-      do iblk = 1, nblocks
+      do iblk = 1, nblocks ! TEST REMAP
          do j = 1, ny_block   
          do i = 1, nx_block   
 
          ! ocean current
          ! constant in time, could be initialized in ice_flux.F90
-         uocn(i,j,iblk) =  p2*real(j-nghost, kind=dbl_kind) &
-                            / real(nx_global,kind=dbl_kind) - p1
-         vocn(i,j,iblk) = -p2*real(i-nghost, kind=dbl_kind) &
-                            / real(ny_global,kind=dbl_kind) + p1
+!         uocn(i,j,iblk) =  p2*real(j-nghost, kind=dbl_kind) &
+!                            / real(nx_global,kind=dbl_kind) - p1
+!         vocn(i,j,iblk) = -p2*real(i-nghost, kind=dbl_kind) &
+!                            / real(ny_global,kind=dbl_kind) + p1
 
-         uocn(i,j,iblk) = uocn(i,j,iblk) * uvm(i,j,iblk)
-         vocn(i,j,iblk) = vocn(i,j,iblk) * uvm(i,j,iblk)
+!         uocn(i,j,iblk) = uocn(i,j,iblk) * uvm(i,j,iblk)
+!         vocn(i,j,iblk) = vocn(i,j,iblk) * uvm(i,j,iblk)
+
+         uocn(i,j,iblk) = c0 ! TEST REMAP
+         vocn(i,j,iblk) = c0
 
          ! wind components
-         uatm(i,j,iblk) = c5 + (sin(pi2*time/period)-c3) &
-                              * sin(pi2*real(i-nghost, kind=dbl_kind)  &
-                                       /real(nx_global,kind=dbl_kind)) &
-                              * sin(pi *real(j-nghost, kind=dbl_kind)  &
-                                       /real(ny_global,kind=dbl_kind))
-         vatm(i,j,iblk) = c5 + (sin(pi2*time/period)-c3) &
-                              * sin(pi *real(i-nghost, kind=dbl_kind)  &
-                                       /real(nx_global,kind=dbl_kind)) &
-                              * sin(pi2*real(j-nghost, kind=dbl_kind)  &
-                                       /real(ny_global,kind=dbl_kind))
+!         uatm(i,j,iblk) = c5 + (sin(pi2*time/period)-c3) &
+!                              * sin(pi2*real(i-nghost, kind=dbl_kind)  &
+!                                       /real(nx_global,kind=dbl_kind)) &
+!                              * sin(pi *real(j-nghost, kind=dbl_kind)  &
+!                                       /real(ny_global,kind=dbl_kind))
+!         vatm(i,j,iblk) = c5 + (sin(pi2*time/period)-c3) &
+!                              * sin(pi *real(i-nghost, kind=dbl_kind)  &
+!                                       /real(nx_global,kind=dbl_kind)) &
+!                              * sin(pi2*real(j-nghost, kind=dbl_kind)  &
+!                                       /real(ny_global,kind=dbl_kind))
+         
+         uatm(i,j,iblk) = 10d0
+         vatm(i,j,iblk) = c0
+
          ! wind stress
          wind(i,j,iblk) = sqrt(uatm(i,j,iblk)**2 + vatm(i,j,iblk)**2)
          tau = rhoa(i,j,iblk) * 0.0012_dbl_kind * wind(i,j,iblk)
