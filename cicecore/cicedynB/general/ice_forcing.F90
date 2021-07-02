@@ -5137,10 +5137,10 @@
       mx = 51.2d0 + 51.2d0*mtime
       my = 51.2d0 + 51.2d0*mtime
       malpha = 0.5d0*pi - 0.5d0*pi/5d0
-      ws = tanh(mtime*(8d0-mtime)/2d0)
+      ws = 1d0 !tanh(mtime*(8d0-mtime)/2d0)
       maxua=0d0
       maxuo=0d0
-
+      
       period = c4*secday
       print *, 'Prescribing winds and ocean currents', istep, dt
       do iblk = 1, nblocks
@@ -5163,7 +5163,7 @@
             if (abs(vatm(i,j,iblk)) .gt. maxva) maxva = abs(vatm(i,j,iblk))
             if (abs(uocn(i,j,iblk)) .gt. maxuo) maxuo = abs(uocn(i,j,iblk))
             if (abs(vocn(i,j,iblk)) .gt. maxvo) maxvo = abs(vocn(i,j,iblk))
-
+            
          else
          ! ocean current
          ! constant in time, could be initialized in ice_flux.F90
