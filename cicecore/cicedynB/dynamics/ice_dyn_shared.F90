@@ -836,13 +836,13 @@
                            taubx,      tauby,    &
                            uvel_init,  vvel_init,&
                            uvel,       vvel,     &
-                           Tb)
+                           Tb, grid_location)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
          icell,              & ! total count when ice[en]mask is true
          ksub                  ! subcycling iteration
-
+         
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxi   , & ! compressed index in i-direction
          indxj       ! compressed index in j-direction
@@ -874,6 +874,9 @@
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Cw                   ! ocean-ice neutral drag coefficient
 
+      character(len=*), intent(in) :: &
+         grid_location ! E (East) or N (North) ! TO BE IMPROVED!!!!
+      
       ! local variables
 
       integer (kind=int_kind) :: &
@@ -934,7 +937,7 @@
             taubx(i,j) = -uvel(i,j)*Tb(i,j) / ccc
             tauby(i,j) = -vvel(i,j)*Tb(i,j) / ccc
          endif
-
+  
       enddo                     ! ij
 
       end subroutine step_vel
@@ -1978,8 +1981,8 @@
       
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T)'
 
-      viscous = .false.     ! standard = .false.
-      replacement = .true. ! standard = .true. (voir aussi viscous_coeffs_and_rep_pressure_T2U)
+      viscous = .true.     ! standard = .false.
+      replacement = .false. ! standard = .true. (voir aussi viscous_coeffs_and_rep_pressure_T2U)
       
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
@@ -2034,7 +2037,7 @@
       
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T2U)'
 
-      replacement = .true. ! standard = .true.
+      replacement = .false. ! standard = .true.
       
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
       Totarea = maskT_00*Tarea_00   + &

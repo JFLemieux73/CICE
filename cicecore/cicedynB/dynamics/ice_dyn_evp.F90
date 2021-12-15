@@ -777,7 +777,7 @@
                                  taubxE    (:,:,iblk), taubyE    (:,:,iblk), &
                                  uvelE_init(:,:,iblk), vvelE_init(:,:,iblk), &
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
-                                 TbE       (:,:,iblk))
+                                 TbE       (:,:,iblk), 'E')
 
                   call step_vel (nx_block,             ny_block,             & ! N point
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
@@ -791,7 +791,7 @@
                                  taubxN    (:,:,iblk), taubyN    (:,:,iblk), &
                                  uvelN_init(:,:,iblk), vvelN_init(:,:,iblk), &
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
-                                 TbN       (:,:,iblk))
+                                 TbN       (:,:,iblk), 'N')
 
                end select
 
