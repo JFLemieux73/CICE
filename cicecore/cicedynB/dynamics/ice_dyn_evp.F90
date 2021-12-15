@@ -735,6 +735,7 @@
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
                                  hm        (:,:,iblk), uvm       (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
+                                 strength  (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                   
 
@@ -1490,6 +1491,7 @@
                              ratiodyE,   ratiodyEr, &
                              epm,  npm, hm, uvm,    &
                              zetax2T,    etax2T,    &
+                             strength, &
                              stresspU,   stressmU,  & 
                              stress12U            )
 
@@ -1526,7 +1528,8 @@
          hm       , & ! T-cell mask
          uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
-         etax2T       ! 2*eta at the T point
+         etax2T   , & ! 2*eta at the T point
+         strength
       
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
          stresspU , & ! sigma11+sigma22
@@ -1574,6 +1577,8 @@
                                                    zetax2T(i+1,j+1), zetax2T(i+1,j  ), &
                                                    etax2T (i  ,j  ), etax2T (i  ,j+1), &
                                                    etax2T (i+1,j+1), etax2T (i+1,j  ), &
+                                                   strength (i  ,j  ), strength (i  ,j+1), &
+                                                   strength (i+1,j+1), strength (i+1,j  ), &
                                                    hm     (i  ,j  ), hm     (i  ,j+1), &
                                                    hm     (i+1,j+1), hm     (i+1,j  ), &
                                                    tarea  (i  ,j  ), tarea  (i  ,j+1), &

@@ -47,7 +47,7 @@
 
       logical (kind=log_kind), public :: &
          revised_evp    ! if true, use revised evp procedure
-
+         
       character (len=char_len), public :: &
          evp_algorithm  ! standard_2d = 2D org version (standard)
                         ! shared_mem_1d = 1d without mpi call and refactorization to 1d 
@@ -1974,14 +1974,27 @@
       real (kind=dbl_kind) :: &
         tmpcalc
 
+      logical (kind=log_kind) :: viscous, replacement
+      
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T)'
 
+      viscous = .false.     ! standard = .false.
+      replacement = .true. ! standard = .true. (voir aussi viscous_coeffs_and_rep_pressure_T2U)
+      
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
-      tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
-                (c1-capping)*(strength/(Delta + tinyarea))
+      if (viscous) then
+         tmpcalc = strength/tinyarea
+      else   
+         tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
+              (c1-capping)*(strength/(Delta + tinyarea))
+      endif
       zetax2 = (c1+Ktens)*tmpcalc
-      rep_prs = (c1-Ktens)*tmpcalc*Delta
+      if (replacement) then
+         rep_prs = (c1-Ktens)*tmpcalc*Delta
+      else
+         rep_prs = (c1-Ktens)*strength
+      endif
       etax2 = epp2i*zetax2
 
        end subroutine viscous_coeffs_and_rep_pressure_T
@@ -1990,7 +2003,9 @@
       subroutine viscous_coeffs_and_rep_pressure_T2U (zetax2T_00, zetax2T_01, &
                                                       zetax2T_11, zetax2T_10, &
                                                        etax2T_00,  etax2T_01, &
-                                                       etax2T_11,  etax2T_10, & 
+                                                       etax2T_11,  etax2T_10, &
+                                                       strength_00,  strength_01, &
+                                                       strength_11,  strength_10, & 
                                                         maskT_00,  maskT_01, &
                                                         maskT_11,  maskT_10, &
                                                         tarea_00,   tarea_01, &
@@ -2002,7 +2017,8 @@
 
       real (kind=dbl_kind), intent(in):: &
         zetax2T_00,zetax2T_10,zetax2T_11,zetax2T_01, &
-         etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
+        etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
+        strength_00,  strength_01, strength_11,  strength_10, &
          maskT_00, maskT_10, maskT_11, maskT_01, &
          tarea_00, tarea_10, tarea_11, tarea_01, &
          deltaU
@@ -2014,8 +2030,12 @@
       real (kind=dbl_kind) :: &
            Totarea
 
+      logical (kind=log_kind) :: replacement
+      
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T2U)'
 
+      replacement = .true. ! standard = .true.
+      
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
       Totarea = maskT_00*Tarea_00   + &
                 maskT_10*Tarea_10   + &
@@ -2030,8 +2050,17 @@
                  maskT_10*Tarea_10 *etax2T_10   + &
                  maskT_11*Tarea_11 *etax2T_11   + &
                  maskT_01*Tarea_01 *etax2T_01)/Totarea
- 
-      rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+
+      if (replacement) then
+         rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+      else
+
+         rep_prsU = (maskT_00*Tarea_00 *strength_00   + &
+                 maskT_10*Tarea_10 *strength_10   + &
+                 maskT_11*Tarea_11 *strength_11   + &
+                 maskT_01*Tarea_01 *strength_01)/Totarea
+         
+      endif
 
        end subroutine viscous_coeffs_and_rep_pressure_T2U
 
