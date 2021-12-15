@@ -906,6 +906,15 @@
          i = indxi(ij)
          j = indxj(ij)
 
+!         if (ksub .eq. 3) then
+!            if (abs(uvel(i,j)) .gt. 1d0 .or. abs(vvel(i,j)) .gt. 1d0) then
+!               print *, 'Z', ksub, grid_location, j,i, massdti(i,j), uvel(i,j), vvel(i,j)
+!            endif
+!            if (abs(uvel(i,j)) .gt. 1d0 .or. abs(vvel(i,j)) .gt. 1d0) then
+!               print *, 'WOWOWO', ksub, grid_location, j,i, uvel(i,j), vvel(i,j)
+!            endif
+!         endif
+            
          uold = uvel(i,j)
          vold = vvel(i,j)
 
@@ -1822,14 +1831,27 @@
 
       real (kind=dbl_kind) :: &                     
         uNip1j, uNij, vEijp1, vEij, uEijp1, uEij, vNip1j, vNij
+
+      logical (kind=log_kind) :: specialBC
       
       character(len=*), parameter :: subname = '(strain_rates_U)'
-         
+
+      specialBC = .false.
+      
       !-----------------------------------------------------------------
       ! strain rates
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
+      if (specialBC) then
+
+          uNip1j = uvelN(i+1,j) * npm(i+1,j)
+          uNij   = uvelN(i,j) * npm(i,j)
+          vEijp1 = vvelE(i,j+1) * epm(i,j+1)
+          vEij   = vvelE(i,j) * epm(i,j)
+          
+      else
+      
       uNip1j = uvelN(i+1,j) * npm(i+1,j) &
              +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * uvelN(i,j)
       uNij   = uvelN(i,j) * npm(i,j) &
@@ -1839,6 +1861,8 @@
       vEij   = vvelE(i,j) * epm(i,j) &
              +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
 
+      endif
+      
  ! MIGHT NOT NEED TO mult by uvm...if done before in calc of uvelU...
       
       ! divergence  =  e_11 + e_22
@@ -1853,6 +1877,15 @@
                - dxU(i,j) * ( vEijp1 - vEij ) &
                + vvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
 
+      if (specialBC) then
+
+         uEijp1 = uvelE(i,j+1) * epm(i,j+1)
+         uEij   = uvelE(i,j) * epm(i,j)
+         vNip1j = vvelN(i+1,j) * npm(i+1,j)
+         vNij   = vvelN(i,j) * npm(i,j)
+         
+      else
+         
       uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
              +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
       uEij   = uvelE(i,j) * epm(i,j) &
@@ -1861,7 +1894,9 @@
              +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * vvelN(i,j)
       vNij   = vvelN(i,j) * npm(i,j) &
              +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * vvelN(i+1,j)
-               
+
+      endif
+      
       ! shearing strain rate  =  2*e_12
       shearU = dxU(i,j) * ( uEijp1 - uEij ) &
                - uvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
