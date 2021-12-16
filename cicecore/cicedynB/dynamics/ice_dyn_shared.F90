@@ -1849,7 +1849,7 @@
           uNij   = uvelN(i,j) * npm(i,j)
           vEijp1 = vvelE(i,j+1) * epm(i,j+1)
           vEij   = vvelE(i,j) * epm(i,j)
-          
+
       else
       
       uNip1j = uvelN(i+1,j) * npm(i+1,j) &
@@ -2010,7 +2010,7 @@
 
       ! local variables
       real (kind=dbl_kind) :: &
-        tmpcalc
+        tmpcalc, vfactor
 
       logical (kind=log_kind) :: viscous, replacement
       
@@ -2021,8 +2021,10 @@
       
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
+      vfactor = 0.01d0
+      
       if (viscous) then
-         tmpcalc = strength/tinyarea
+         tmpcalc = vfactor*strength/tinyarea
       else   
          tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
               (c1-capping)*(strength/(Delta + tinyarea))
@@ -2072,7 +2074,7 @@
       
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T2U)'
 
-      replacement = .false. ! standard = .true.
+      replacement = .true. ! standard = .true.
       
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
       Totarea = maskT_00*Tarea_00   + &
