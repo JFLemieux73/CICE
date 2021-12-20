@@ -1797,7 +1797,7 @@
       
       character(len=*), parameter :: subname = '(strain_rates_U)'
 
-      specialBC = .false.
+      specialBC = .false. ! standard = .false.
       
       !-----------------------------------------------------------------
       ! strain rates
@@ -1977,8 +1977,8 @@
       
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T)'
 
-      viscous = .true.     ! standard = .false.
-      replacement = .false. ! standard = .true. (voir aussi viscous_coeffs_and_rep_pressure_T2U)
+      viscous = .false.     ! standard = .false.
+      replacement = .true. ! standard = .true. (voir aussi viscous_coeffs_and_rep_pressure_T2U)
       
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
