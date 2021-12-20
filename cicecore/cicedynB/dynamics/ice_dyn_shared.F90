@@ -804,6 +804,10 @@
 
       enddo                     ! ij
 
+      if (ksub == ndte) then
+         print *, 'B grid u and v at 40,40 = ', uvel(40,40), vvel(40,40) 
+      endif
+         
       end subroutine stepu
 
 !=======================================================================
@@ -923,6 +927,10 @@
 
       enddo                     ! ij
 
+      if (ksub == ndte) then
+         print *, 'CD grid u and v at 40,40 = ', uvel(40,40), vvel(40,40)
+      endif
+      
       end subroutine step_vel
 
 !=======================================================================
