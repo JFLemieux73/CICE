@@ -826,7 +826,7 @@
                            taubx,      tauby,    &
                            uvel_init,  vvel_init,&
                            uvel,       vvel,     &
-                           Tb)
+                           Tb, grid_location)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -864,6 +864,9 @@
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Cw                   ! ocean-ice neutral drag coefficient
 
+      character(len=*), intent(in) :: &
+         grid_location ! E (East) or N (North) ! TO BE IMPROVED!!!!
+      
       ! local variables
 
       integer (kind=int_kind) :: &
@@ -1789,14 +1792,27 @@
 
       real (kind=dbl_kind) :: &                     
         uNip1j, uNij, vEijp1, vEij, uEijp1, uEij, vNip1j, vNij
+
+      logical (kind=log_kind) :: specialBC
       
       character(len=*), parameter :: subname = '(strain_rates_U)'
-         
+
+      specialBC = .false.
+      
       !-----------------------------------------------------------------
       ! strain rates
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
+      if (specialBC) then
+
+          uNip1j = uvelN(i+1,j) * npm(i+1,j)
+          uNij   = uvelN(i,j) * npm(i,j)
+          vEijp1 = vvelE(i,j+1) * epm(i,j+1)
+          vEij   = vvelE(i,j) * epm(i,j)
+
+      else
+      
       uNip1j = uvelN(i+1,j) * npm(i+1,j) &
              +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * uvelN(i,j)
       uNij   = uvelN(i,j) * npm(i,j) &
@@ -1806,6 +1822,8 @@
       vEij   = vvelE(i,j) * epm(i,j) &
              +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
 
+      endif
+      
  ! MIGHT NOT NEED TO mult by uvm...if done before in calc of uvelU...
       
       ! divergence  =  e_11 + e_22
@@ -1820,6 +1838,15 @@
                - dxU(i,j) * ( vEijp1 - vEij ) &
                + vvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
 
+      if (specialBC) then
+
+         uEijp1 = uvelE(i,j+1) * epm(i,j+1)
+         uEij   = uvelE(i,j) * epm(i,j)
+         vNip1j = vvelN(i+1,j) * npm(i+1,j)
+         vNij   = vvelN(i,j) * npm(i,j)
+         
+      else
+         
       uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
              +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
       uEij   = uvelE(i,j) * epm(i,j) &
@@ -1828,7 +1855,9 @@
              +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * vvelN(i,j)
       vNij   = vvelN(i,j) * npm(i,j) &
              +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * vvelN(i+1,j)
-               
+
+      endif
+      
       ! shearing strain rate  =  2*e_12
       shearU = dxU(i,j) * ( uEijp1 - uEij ) &
                - uvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
@@ -1942,16 +1971,31 @@
 
       ! local variables
       real (kind=dbl_kind) :: &
-        tmpcalc
+        tmpcalc, vfactor
 
+      logical (kind=log_kind) :: viscous, replacement
+      
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T)'
 
+      viscous = .true.     ! standard = .false.
+      replacement = .false. ! standard = .true. (voir aussi viscous_coeffs_and_rep_pressure_T2U)
+      
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
-      tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
-                (c1-capping)*(strength/(Delta + tinyarea))
+      vfactor = 0.001d0
+      
+      if (viscous) then
+         tmpcalc = vfactor*strength/tinyarea
+      else   
+         tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
+              (c1-capping)*(strength/(Delta + tinyarea))
+      endif
       zetax2 = (c1+Ktens)*tmpcalc
-      rep_prs = (c1-Ktens)*tmpcalc*Delta
+      if (replacement) then
+         rep_prs = (c1-Ktens)*tmpcalc*Delta
+      else
+         rep_prs = (c1-Ktens)*strength
+      endif
       etax2 = epp2i*zetax2
 
        end subroutine viscous_coeffs_and_rep_pressure_T
@@ -1960,7 +2004,9 @@
       subroutine viscous_coeffs_and_rep_pressure_T2U (zetax2T_00, zetax2T_01, &
                                                       zetax2T_11, zetax2T_10, &
                                                        etax2T_00,  etax2T_01, &
-                                                       etax2T_11,  etax2T_10, & 
+                                                       etax2T_11,  etax2T_10, &
+                                                       strength_00,  strength_01, &
+                                                       strength_11,  strength_10, & 
                                                         maskT_00,  maskT_01, &
                                                         maskT_11,  maskT_10, &
                                                         tarea_00,   tarea_01, &
@@ -1972,7 +2018,8 @@
 
       real (kind=dbl_kind), intent(in):: &
         zetax2T_00,zetax2T_10,zetax2T_11,zetax2T_01, &
-         etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
+        etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
+        strength_00,  strength_01, strength_11,  strength_10, &
          maskT_00, maskT_10, maskT_11, maskT_01, &
          tarea_00, tarea_10, tarea_11, tarea_01, &
          deltaU
@@ -1984,8 +2031,12 @@
       real (kind=dbl_kind) :: &
            Totarea
 
+      logical (kind=log_kind) :: replacement
+      
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T2U)'
 
+      replacement = .true. ! standard = .true.
+      
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
       Totarea = maskT_00*Tarea_00   + &
                 maskT_10*Tarea_10   + &
@@ -2000,8 +2051,17 @@
                  maskT_10*Tarea_10 *etax2T_10   + &
                  maskT_11*Tarea_11 *etax2T_11   + &
                  maskT_01*Tarea_01 *etax2T_01)/Totarea
- 
-      rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+
+      if (replacement) then
+         rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+      else
+
+         rep_prsU = (maskT_00*Tarea_00 *strength_00   + &
+                 maskT_10*Tarea_10 *strength_10   + &
+                 maskT_11*Tarea_11 *strength_11   + &
+                 maskT_01*Tarea_01 *strength_01)/Totarea
+         
+      endif
 
        end subroutine viscous_coeffs_and_rep_pressure_T2U
 
