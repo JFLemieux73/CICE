@@ -1,0 +1,11 @@
+voir uniform_data_atm et uniform_data_ocn dans ice_forcing.F90
+voir aussi set_state_var dans cicecore/cicedynB/general/ice_init.F90
+
+voir dans ice_in:
+
+atm_data_type   = 'uniform_east'
+ocn_data_type   = 'calm'
+ice_data_type   = 'uniform'
+ice_ic         = 'default'
+
+glace jusqua j=71 (T point)
