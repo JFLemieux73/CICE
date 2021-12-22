@@ -9,4 +9,4 @@ grep 'viscous =' ../cicecore/cicedynB/dynamics/*
 grep 'vfactor =' ../cicecore/cicedynB/dynamics/* 
 grep 'replacement =' ../cicecore/cicedynB/dynamics/*
 grep 'specialBC =' ../cicecore/cicedynB/dynamics/*
-grep 'blockuniform =' ../cicecore/cicedynB/general/ice_init.F90
+grep 'blockuni =' ../cicecore/cicedynB/general/ice_init.F90
