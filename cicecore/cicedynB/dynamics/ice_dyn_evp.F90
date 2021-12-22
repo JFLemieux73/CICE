@@ -493,7 +493,7 @@
                          uocnE     (:,:,iblk), vocnE     (:,:,iblk), & 
                          strairxE  (:,:,iblk), strairyE  (:,:,iblk), & 
                          ss_tltxE  (:,:,iblk), ss_tltyE  (:,:,iblk), &  
-                         icetmask  (:,:,iblk), icenmask  (:,:,iblk), & 
+                         icetmask  (:,:,iblk), iceemask  (:,:,iblk), & 
                          fmE       (:,:,iblk), dt,                   & 
                          strtltxE  (:,:,iblk), strtltyE  (:,:,iblk), & 
                          strocnxE  (:,:,iblk), strocnyE  (:,:,iblk), & 
