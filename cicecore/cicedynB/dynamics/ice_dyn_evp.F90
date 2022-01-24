@@ -799,7 +799,7 @@
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                                  TbN       (:,:,iblk))
 
-                  testC=2
+                  testC=1
                   if (testC .eq. 1) then
                   
                   call uN_from_uE (nx_block,   ny_block, &
