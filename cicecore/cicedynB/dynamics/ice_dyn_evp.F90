@@ -46,7 +46,7 @@
           ndte, yield_curve, ecci, denom1, arlx1i, fcor_blk, fcorE_blk, fcorN_blk, &
           uvel_init, vvel_init, uvelE_init, vvelE_init, uvelN_init, vvelN_init, &
           seabed_stress_factor_LKD, seabed_stress_factor_prob, seabed_stress_method, &
-          seabed_stress, Ktens, revp
+          seabed_stress, Ktens, revp, uN_from_uE, vE_from_vN, uE_from_uN, vN_from_vE
       use ice_fileunits, only: nu_diag
       use ice_exit, only: abort_ice
       use icepack_intfc, only: icepack_warnings_flush, icepack_warnings_aborted
@@ -192,6 +192,8 @@
 
       logical (kind=log_kind) :: calc_strair
 
+      integer :: testC
+      
       integer (kind=int_kind), dimension (nx_block,ny_block,max_blocks) :: &
          icetmask, &  ! ice extent mask (T-cell)
          halomask     ! generic halo mask
@@ -797,6 +799,37 @@
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                                  TbN       (:,:,iblk))
 
+                  testC=2
+                  if (testC .eq. 1) then
+                  
+                  call uN_from_uE (nx_block,   ny_block, &
+                                   icelln (iblk),        &
+                                   indxni (:,iblk), indxnj (:,iblk), &
+                                   ksub,       epm (:,:,iblk),      &
+                                   uvelE  (:,:,iblk), uvelN (:,:,iblk) )
+                  
+                  call vE_from_vN (nx_block,   ny_block, &
+                                   icelle (iblk),        &
+                                   indxei (:,iblk), indxej (:,iblk), &
+                                   ksub,       npm (:,:,iblk),      &
+                                   vvelN  (:,:,iblk), vvelE (:,:,iblk) )
+
+               elseif (testC .eq. 2) then
+
+                  
+                  call uE_from_uN (nx_block,   ny_block, &
+                                   icelle (iblk),        &
+                                   indxei (:,iblk), indxej (:,iblk), &
+                                   ksub,       npm (:,:,iblk),      &
+                                   uvelN  (:,:,iblk), uvelE (:,:,iblk) )
+                  
+                  call vN_from_vE (nx_block,   ny_block, &
+                                   icelln (iblk),        &
+                                   indxni (:,iblk), indxnj (:,iblk), &
+                                   ksub,       epm (:,:,iblk),      &
+                                   vvelE  (:,:,iblk), vvelN (:,:,iblk) )
+               endif
+                  
                end select
 
             enddo
