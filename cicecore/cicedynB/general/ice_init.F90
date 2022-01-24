@@ -2622,8 +2622,8 @@
          edge_init_nh =  70._dbl_kind, & ! initial ice edge, N.Hem. (deg) 
          edge_init_sh = -60._dbl_kind    ! initial ice edge, S.Hem. (deg)
 
-      logical (kind=log_kind) :: tr_brine, tr_lvl, tr_snow
-      integer (kind=int_kind) :: ntrcr
+      logical (kind=log_kind) :: tr_brine, tr_lvl, tr_snow, blockuni
+      integer (kind=int_kind) :: ntrcr, celloffset
       integer (kind=int_kind) :: nt_Tsfc, nt_qice, nt_qsno, nt_sice
       integer (kind=int_kind) :: nt_fbri, nt_alvl, nt_vlvl
       integer (kind=int_kind) :: nt_smice, nt_smliq, nt_rhos, nt_rsnw
@@ -2753,6 +2753,27 @@
             enddo                  ! j
             
          else if (trim(ice_data_type) == 'uniform') then
+
+            blockuni = .true. ! JFL block uniform of ice
+            celloffset=10
+            
+            if (blockuni) then
+
+               print *, 'JFL block uniform'
+               
+            icells = 0
+            do j = jlo+celloffset, jhi-celloffset
+            do i = ilo+celloffset, ihi-celloffset
+               if (tmask(i,j)) then
+                  icells = icells + 1
+                  indxi(icells) = i
+                  indxj(icells) = j
+               endif
+            enddo
+            enddo
+               
+            else
+            
             ! all cells not land mask are ice
             icells = 0
             do j = jlo, jhi
@@ -2764,6 +2785,8 @@
                endif
             enddo
             enddo
+
+         endif
             
          else ! default behavior
 
