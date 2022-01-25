@@ -190,9 +190,9 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
-      logical (kind=log_kind) :: calc_strair, viscous, rep_prs_zero
+      logical (kind=log_kind) :: calc_strair, viscous
 
-      integer :: testC
+      integer :: testC, rep_prs_option
 
       integer (kind=int_kind), dimension (nx_block,ny_block,max_blocks) :: &
          icetmask, &  ! ice extent mask (T-cell)
@@ -219,7 +219,7 @@
       !-------------
 
       viscous=.false.
-      rep_prs_zero=.false.
+      rep_prs_option=1 ! 1: normal, 2: rep_prs=P, 3: rep_prs=0
       
       !-----------------------------------------------------------------
       ! Initialize
@@ -1237,22 +1237,22 @@
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltane,       zetax2ne,     &
                                                  etax2ne,       rep_prsne,    &
-                                                 capping, viscous, rep_prs_zero)
+                                                 capping, viscous, rep_prs_option)
  
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltanw,       zetax2nw,     &
                                                  etax2nw,       rep_prsnw,    &
-                                                 capping, viscous, rep_prs_zero)
+                                                 capping, viscous, rep_prs_option)
 
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltasw,       zetax2sw,     &
                                                  etax2sw,       rep_prssw,    &
-                                                 capping, viscous, rep_prs_zero)
+                                                 capping, viscous, rep_prs_option)
 
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltase,       zetax2se,     &
                                                  etax2se,       rep_prsse,    &
-                                                 capping, viscous, rep_prs_zero)
+                                                 capping, viscous, rep_prs_option)
 
          
       !-----------------------------------------------------------------
@@ -1545,7 +1545,7 @@
                                                  DeltaT,                  &
                                                  zetax2T(i,j),etax2T(i,j),&
                                                  rep_prsT, capping,       &
-                                                 viscous, rep_prs_zero)
+                                                 viscous, rep_prs_option)
          
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2
@@ -1688,12 +1688,14 @@
                                                    zetax2T(i+1,j+1), zetax2T(i+1,j  ), &
                                                    etax2T (i  ,j  ), etax2T (i  ,j+1), &
                                                    etax2T (i+1,j+1), etax2T (i+1,j  ), &
+                                                   strength (i  ,j  ), strength (i  ,j+1), &
+                                                   strength (i+1,j+1), strength (i+1,j  ), &
                                                    hm     (i  ,j  ), hm     (i  ,j+1), &
                                                    hm     (i+1,j+1), hm     (i+1,j  ), &
                                                    tarea  (i  ,j  ), tarea  (i  ,j+1), &
                                                    tarea  (i+1,j+1), tarea  (i+1,j  ), &
                                                    DeltaU,zetax2U, etax2U, rep_prsU,   &
-                                                   rep_prs_zero)
+                                                   rep_prs_option)
 
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2

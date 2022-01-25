@@ -2095,7 +2095,7 @@
                                                     Delta   , zetax2  , &
                                                     etax2   , rep_prs , &
                                                     capping , viscous,   &
-                                                    rep_prs_zero)
+                                                    rep_prs_option)
 
       real (kind=dbl_kind), intent(in)::  &
         strength, tinyarea
@@ -2103,26 +2103,38 @@
       real (kind=dbl_kind), intent(in)::  &
         Delta, capping
 
-      logical (kind=log_kind), intent(in) :: viscous, rep_prs_zero
+      logical (kind=log_kind), intent(in) :: viscous
+
+      integer (kind=int_kind), intent(in) :: rep_prs_option
 
       real (kind=dbl_kind), intent(out):: &
         zetax2, etax2, rep_prs ! 2 x visous coeffs, replacement pressure
 
       ! local variables
       real (kind=dbl_kind) :: &
-        tmpcalc
+        tmpcalc, vfactor
 
       character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T)'
 
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
-      tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
-                (c1-capping)*(strength/(Delta + tinyarea))
-      zetax2 = (c1+Ktens)*tmpcalc
-      rep_prs = (c1-Ktens)*tmpcalc*Delta
-      etax2 = epp2i*zetax2
+      vfactor = 0.001d0
       
-      if (rep_prs_zero) rep_prs = c0
+      if (viscous) then
+         tmpcalc = vfactor*strength/tinyarea
+      else   
+         tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
+              (c1-capping)*(strength/(Delta + tinyarea))
+      endif
+      zetax2 = (c1+Ktens)*tmpcalc
+      if (rep_prs_option == 1) then
+         rep_prs = (c1-Ktens)*tmpcalc*Delta
+      elseif (rep_prs_option == 2) then
+         rep_prs = (c1-Ktens)*strength
+      elseif (rep_prs_option == 3) then
+         rep_prs = c0
+      endif
+      etax2 = epp2i*zetax2
       
 
       end subroutine viscous_coeffs_and_rep_pressure_T
@@ -2131,24 +2143,27 @@
       subroutine viscous_coeffs_and_rep_pressure_T2U (zetax2T_00, zetax2T_01, &
                                                       zetax2T_11, zetax2T_10, &
                                                        etax2T_00,  etax2T_01, &
-                                                       etax2T_11,  etax2T_10, & 
+                                                       etax2T_11,  etax2T_10, &
+                                                       strength_00,  strength_01, &
+                                                       strength_11,  strength_10, & 
                                                         maskT_00,  maskT_01, &
                                                         maskT_11,  maskT_10, &
                                                         tarea_00,   tarea_01, &
                                                         tarea_11,   tarea_10, &
                                                         deltaU,               &
                                                         zetax2U, etax2U,      &
-                                                        rep_prsU, , rep_prs_zero)
+                                                        rep_prsU, , rep_prs_option)
                               
 
       real (kind=dbl_kind), intent(in):: &
         zetax2T_00,zetax2T_10,zetax2T_11,zetax2T_01, &
-         etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
+        etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
+        strength_00,  strength_01, strength_11,  strength_10, &
          maskT_00, maskT_10, maskT_11, maskT_01, &
          tarea_00, tarea_10, tarea_11, tarea_01, &
          deltaU
 
-      logical (kind=log_kind), intent(in) :: rep_prs_zero
+      integer (kind=int_kind), intent(in) :: rep_prs_option
       
       real (kind=dbl_kind), intent(out):: zetax2U, etax2U, rep_prsU
 
@@ -2174,9 +2189,20 @@
                  maskT_11*Tarea_11 *etax2T_11   + &
                  maskT_01*Tarea_01 *etax2T_01)/Totarea
  
-      rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+      if (rep_prs_option == 1) then
+         rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+      elseif (rep_prs_option == 2) then
 
-      if (rep_prs_zero) rep_prsU = c0
+         rep_prsU = (maskT_00*Tarea_00 *strength_00   + &
+                 maskT_10*Tarea_10 *strength_10   + &
+                 maskT_11*Tarea_11 *strength_11   + &
+                 maskT_01*Tarea_01 *strength_01)/Totarea
+
+      elseif (rep_prs_option == 3) then
+
+         rep_prsU = c0
+         
+      endif
       
        end subroutine viscous_coeffs_and_rep_pressure_T2U
 
