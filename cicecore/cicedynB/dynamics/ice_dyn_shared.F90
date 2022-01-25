@@ -27,6 +27,7 @@
                 dyn_prep1, dyn_prep2, dyn_finish, &
                 seabed_stress_factor_LKD, seabed_stress_factor_prob, &
                 alloc_dyn_shared, &
+                uN_from_uE, vE_from_vN, uE_from_uN, vN_from_vE, &
                 deformations, deformations_T, &
                 strain_rates, strain_rates_T, strain_rates_U, &
                 viscous_coeffs_and_rep_pressure, &
@@ -925,6 +926,178 @@
 
       end subroutine step_vel
 
+    subroutine uN_from_uE (nx_block,   ny_block, &
+                           icell,                &
+                           indxi,      indxj,    &
+                           ksub,       epm,      &
+                           uvelE,      uvelN    )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block, & ! block dimensions
+         icell,              & ! total count when ice[en]mask is true
+         ksub                  ! subcycling iteration
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxi   , & ! compressed index in i-direction
+         indxj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         epm, uvelE    ! x-component of velocity (m/s)
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
+         uvelN    ! x-component of velocity (m/s)
+      
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, ij
+
+      character(len=*), parameter :: subname = '(uN_from_uE)'
+      
+      !-----------------------------------------------------------------
+      ! integrate the momentum equation
+      !-----------------------------------------------------------------
+
+      do ij =1, icell
+         i = indxi(ij)
+         j = indxj(ij)
+
+         uvelN(i,j)=( uvelE(i,j)*epm(i,j) + uvelE(i-1,j)*epm(i-1,j) + &
+              uvelE(i-1,j+1)*epm(i-1,j+1) + uvelE(i,j+1)*epm(i,j+1) )/4d0
+
+      enddo                     ! ij
+
+    end subroutine uN_from_uE
+
+    subroutine uE_from_uN (nx_block,   ny_block, &
+                           icell,                &
+                           indxi,      indxj,    &
+                           ksub,       npm,      &
+                           uvelN,      uvelE    )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block, & ! block dimensions
+         icell,              & ! total count when ice[en]mask is true
+         ksub                  ! subcycling iteration
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxi   , & ! compressed index in i-direction
+         indxj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         npm, uvelN    ! x-component of velocity (m/s)
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
+         uvelE    ! x-component of velocity (m/s)
+      
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, ij
+
+      character(len=*), parameter :: subname = '(uN_from_uE)'
+      
+      !-----------------------------------------------------------------
+      ! integrate the momentum equation
+      !-----------------------------------------------------------------
+
+      do ij =1, icell
+         i = indxi(ij)
+         j = indxj(ij)
+
+         uvelE(i,j)=( uvelN(i,j)*npm(i,j) + uvelN(i+1,j)*npm(i+1,j) + &
+              uvelN(i+1,j-1)*npm(i+1,j-1) + uvelN(i,j-1)*npm(i,j-1) )/4d0
+
+      enddo                     ! ij
+
+    end subroutine uE_from_uN
+
+    subroutine vE_from_vN (nx_block,   ny_block, &
+                           icell,                &
+                           indxi,      indxj,    &
+                           ksub,       npm,      &
+                           vvelN,      vvelE    )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block, & ! block dimensions
+         icell,              & ! total count when ice[en]mask is true
+         ksub                  ! subcycling iteration
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxi   , & ! compressed index in i-direction
+         indxj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         npm, vvelN    ! x-component of velocity (m/s)
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
+         vvelE    ! x-component of velocity (m/s)
+      
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, ij
+
+      character(len=*), parameter :: subname = '(vE_from_vN)'
+
+      !-----------------------------------------------------------------
+      ! integrate the momentum equation
+      !-----------------------------------------------------------------
+
+      do ij =1, icell
+         i = indxi(ij)
+         j = indxj(ij)
+
+         vvelE(i,j)=( vvelN(i,j)*npm(i,j) + vvelN(i+1,j)*npm(i+1,j) + &
+              vvelN(i+1,j-1)*npm(i+1,j-1) + vvelN(i,j-1)*npm(i,j-1) )/4d0
+
+      enddo                     ! ij
+
+    end subroutine vE_from_vN
+
+    subroutine vN_from_vE (nx_block,   ny_block, &
+                           icell,                &
+                           indxi,      indxj,    &
+                           ksub,       epm,      &
+                           vvelE,      vvelN    )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block, & ! block dimensions
+         icell,              & ! total count when ice[en]mask is true
+         ksub                  ! subcycling iteration
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxi   , & ! compressed index in i-direction
+         indxj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         epm, vvelE    ! x-component of velocity (m/s)
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
+         vvelN    ! x-component of velocity (m/s)
+      
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, ij
+
+      character(len=*), parameter :: subname = '(vN_from_vE)'
+
+      !-----------------------------------------------------------------
+      ! integrate the momentum equation
+      !-----------------------------------------------------------------
+
+      do ij =1, icell
+         i = indxi(ij)
+         j = indxj(ij)
+
+         vvelN(i,j)=( vvelE(i,j)*epm(i,j) + vvelE(i-1,j)*epm(i-1,j) + &
+              vvelE(i-1,j+1)*epm(i-1,j+1) + vvelE(i,j+1)*epm(i,j+1) )/4d0
+         
+      enddo                     ! ij
+
+    end subroutine vN_from_vE
+      
 !=======================================================================
 
 ! Calculation of the ice-ocean stress.
