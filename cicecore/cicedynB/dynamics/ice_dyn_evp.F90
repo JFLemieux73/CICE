@@ -190,7 +190,7 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
-      logical (kind=log_kind) :: calc_strair
+      logical (kind=log_kind) :: calc_strair, viscous, rep_prs_zero
 
       integer :: testC
       
@@ -212,6 +212,14 @@
       
       character(len=*), parameter :: subname = '(evp)'
 
+
+      !-------------
+      ! CD DEBUG
+      !-------------
+
+      viscous=.false.
+      rep_prs_zero=.false.      
+      
       call ice_timer_start(timer_dynamics) ! dynamics
 
       !-----------------------------------------------------------------
@@ -1159,22 +1167,22 @@
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltane,       zetax2ne,     &
                                                  etax2ne,       rep_prsne,    &
-                                                 capping)
+                                                 capping, viscous, rep_prs_zero)
  
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltanw,       zetax2nw,     &
                                                  etax2nw,       rep_prsnw,    &
-                                                 capping)
+                                                 capping, viscous, rep_prs_zero)
 
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltasw,       zetax2sw,     &
                                                  etax2sw,       rep_prssw,    &
-                                                 capping)
+                                                 capping, viscous, rep_prs_zero)
 
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltase,       zetax2se,     &
                                                  etax2se,       rep_prsse,    &
-                                                 capping)
+                                                 capping, viscous, rep_prs_zero)
 
          
       !-----------------------------------------------------------------
@@ -1466,7 +1474,7 @@
                                                  tinyarea(i,j),           &
                                                  DeltaT,                  &
                                                  zetax2T(i,j),etax2T(i,j),&
-                                                 rep_prsT, capping        )
+                                                 rep_prsT, capping, viscous, rep_prs_zero)
          
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2
@@ -1613,7 +1621,7 @@
                                                    hm     (i+1,j+1), hm     (i+1,j  ), &
                                                    tarea  (i  ,j  ), tarea  (i  ,j+1), &
                                                    tarea  (i+1,j+1), tarea  (i+1,j  ), &
-                                                   DeltaU,zetax2U, etax2U, rep_prsU)
+                                                   DeltaU,zetax2U, etax2U, rep_prsU, rep_prs_zero)
 
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2

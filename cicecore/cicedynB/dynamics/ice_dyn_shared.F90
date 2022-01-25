@@ -2093,7 +2093,8 @@
       subroutine viscous_coeffs_and_rep_pressure_T (strength, tinyarea, &
                                                     Delta   , zetax2  , &
                                                     etax2   , rep_prs , &
-                                                    capping)
+                                                    capping, viscous,   &
+                                                    rep_prs_zero)
 
       real (kind=dbl_kind), intent(in)::  &
         strength, tinyarea
@@ -2101,6 +2102,8 @@
       real (kind=dbl_kind), intent(in)::  &
         Delta, capping
 
+      logical (kind=log_kind), intent(in) :: viscous, rep_prs_zero
+      
       real (kind=dbl_kind), intent(out):: &
         zetax2, etax2, rep_prs ! 2 x visous coeffs, replacement pressure
 
@@ -2118,6 +2121,8 @@
       rep_prs = (c1-Ktens)*tmpcalc*Delta
       etax2 = epp2i*zetax2
 
+      if (rep_prs_zero) rep_prs = c0
+
        end subroutine viscous_coeffs_and_rep_pressure_T
 
 
@@ -2131,7 +2136,7 @@
                                                         tarea_11,   tarea_10, &
                                                         deltaU,               &
                                                         zetax2U, etax2U,      &
-                                                        rep_prsU)
+                                                        rep_prsU, rep_prs_zero)
                               
 
       real (kind=dbl_kind), intent(in):: &
@@ -2140,7 +2145,9 @@
          maskT_00, maskT_10, maskT_11, maskT_01, &
          tarea_00, tarea_10, tarea_11, tarea_01, &
          deltaU
-
+      
+      logical (kind=log_kind), intent(in) :: rep_prs_zero
+      
       real (kind=dbl_kind), intent(out):: zetax2U, etax2U, rep_prsU
 
       ! local variables
@@ -2167,6 +2174,8 @@
  
       rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
 
+      if (rep_prs_zero) rep_prsU = c0
+      
        end subroutine viscous_coeffs_and_rep_pressure_T2U
 
 !=======================================================================
