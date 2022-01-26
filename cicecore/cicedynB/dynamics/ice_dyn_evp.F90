@@ -716,7 +716,7 @@
                                stress12_3(:,:,iblk), stress12_4(:,:,iblk), &
                                shear     (:,:,iblk), divu      (:,:,iblk), &
                                rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk), &
-                               strtmp    (:,:,:) )
+                               strtmp    (:,:,:) , viscous, rep_prs_option)
 
             !-----------------------------------------------------------------
             ! momentum equation
@@ -758,7 +758,8 @@
                                  stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
                                  stress12T (:,:,iblk),                       &
                                  shear     (:,:,iblk), divu      (:,:,iblk), &
-                                 rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk)  )
+                                 rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk), &
+                                 viscous, rep_prs_option)
 
                enddo
 
@@ -787,8 +788,9 @@
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
                                  hm        (:,:,iblk), uvm       (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
+                                 strength  (:,:,iblk),                       &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
-                                 stress12U (:,:,iblk))                   
+                                 stress12U (:,:,iblk), rep_prs_option)                   
 
                enddo
                !$TCXOMP END PARALLEL DO
@@ -1130,19 +1132,22 @@
                          stress12_3, stress12_4, & 
                          shear,      divu,       & 
                          rdg_conv,   rdg_shear,  & 
-                         str )
+                         str,                    &
+                         viscous, rep_prs_option)
 
       use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure_T
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
-         ksub              , & ! subcycling step
+         ksub,  rep_prs_option , & ! subcycling step
          icellt                ! no. of cells where icetmask = 1
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxti   , & ! compressed index in i-direction
          indxtj       ! compressed index in j-direction
 
+      logical (kind=log_kind),  intent(in) :: viscous
+      
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          strength , & ! ice strength (N/m)
          uvel     , & ! x-component of velocity (m/s)
@@ -1459,20 +1464,22 @@
                              stresspT,   stressmT,   & 
                              stress12T,              & 
                              shear,      divu,       & 
-                             rdg_conv,   rdg_shear   )
+                             rdg_conv,   rdg_shear,  &
+                             viscous, rep_prs_option )
 
         use ice_dyn_shared, only: strain_rates_T, deformations_T, &
                                   viscous_coeffs_and_rep_pressure_T
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
-         ksub              , & ! subcycling step
+         ksub, rep_prs_option , & ! subcycling step
          icellt                ! no. of cells where icetmask = 1
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxti   , & ! compressed index in i-direction
          indxtj       ! compressed index in j-direction
 
+      logical (kind=log_kind),  intent(in) :: viscous
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          uvelE    , & ! x-component of velocity (m/s) at the E point
@@ -1604,15 +1611,16 @@
                              ratiodyE,   ratiodyEr, &
                              epm,  npm, hm, uvm,    &
                              zetax2T,    etax2T,    &
+                             strength,              &
                              stresspU,   stressmU,  & 
-                             stress12U            )
+                             stress12U, rep_prs_option)
 
       use ice_dyn_shared, only: strain_rates_U, &
                                 viscous_coeffs_and_rep_pressure_T2U
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
-         ksub              , & ! subcycling step
+         ksub, rep_prs_option , & ! subcycling step
          icellu                ! no. of cells where iceumask = 1
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
@@ -1640,7 +1648,8 @@
          hm       , & ! T-cell mask
          uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
-         etax2T       ! 2*eta at the T point
+         etax2T   , & ! 2*eta at the T point
+         strength
       
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
          stresspU , & ! sigma11+sigma22

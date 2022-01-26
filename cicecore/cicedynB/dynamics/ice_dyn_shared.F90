@@ -2152,7 +2152,7 @@
                                                         tarea_11,   tarea_10, &
                                                         deltaU,               &
                                                         zetax2U, etax2U,      &
-                                                        rep_prsU, , rep_prs_option)
+                                                        rep_prsU, rep_prs_option)
                               
 
       real (kind=dbl_kind), intent(in):: &
