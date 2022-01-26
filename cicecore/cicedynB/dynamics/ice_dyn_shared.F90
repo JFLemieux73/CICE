@@ -2118,7 +2118,7 @@
 
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
-      vfactor = 0.001d0
+      vfactor=0.001d0
       
       if (viscous) then
          tmpcalc = vfactor*strength/tinyarea
