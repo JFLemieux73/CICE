@@ -2754,7 +2754,7 @@
             
          else if (trim(ice_data_type) == 'uniform') then
             ! all cells not land mask are ice
-            celloffset=0 ! JFL
+            celloffset=5 ! JFL
             icells = 0
             do j = jlo+celloffset, jhi-celloffset
                do i = ilo+celloffset, ihi-celloffset

@@ -190,7 +190,7 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
-      logical (kind=log_kind) :: calc_strair, viscous
+      logical (kind=log_kind) :: calc_strair, viscous, lineardrag
 
       integer :: testC, rep_prs_option
 
@@ -218,8 +218,9 @@
       ! CD DEBUG
       !-------------
 
-      viscous=.false.
-      rep_prs_option=1 ! 1: normal, 2: rep_prs=P, 3: rep_prs=0
+      viscous=.true.
+      rep_prs_option=3 ! 1: normal, 2: rep_prs=P, 3: rep_prs=0
+      lineardrag=.true.
       
       !-----------------------------------------------------------------
       ! Initialize
@@ -735,7 +736,7 @@
                               taubx    (:,:,iblk), tauby   (:,:,iblk), &
                               uvel_init(:,:,iblk), vvel_init(:,:,iblk),&
                               uvel     (:,:,iblk), vvel    (:,:,iblk), &
-                              Tbu      (:,:,iblk))
+                              Tbu      (:,:,iblk), lineardrag)
 
             enddo
             !$TCXOMP END PARALLEL DO
@@ -858,7 +859,7 @@
                                  taubxE    (:,:,iblk), taubyE    (:,:,iblk), &
                                  uvelE_init(:,:,iblk), vvelE_init(:,:,iblk), &
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
-                                 TbE       (:,:,iblk))
+                                 TbE       (:,:,iblk), lineardrag)
 
                   call step_vel (nx_block,             ny_block,             & ! N point
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
@@ -872,7 +873,7 @@
                                  taubxN    (:,:,iblk), taubyN    (:,:,iblk), &
                                  uvelN_init(:,:,iblk), vvelN_init(:,:,iblk), &
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
-                                 TbN       (:,:,iblk))
+                                 TbN       (:,:,iblk), lineardrag)
 
                   
                   testC=1

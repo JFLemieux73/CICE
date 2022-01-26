@@ -692,7 +692,7 @@
                         taubx,      tauby,    &
                         uvel_init,  vvel_init,&
                         uvel,       vvel,     &
-                        Tbu)
+                        Tbu, lineardrag)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -703,6 +703,8 @@
          indxui  , & ! compressed index in i-direction
          indxuj      ! compressed index in j-direction
 
+      logical (kind=log_kind), intent(in) :: lineardrag
+      
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Tbu,      & ! seabed stress factor (N/m^2)
          uvel_init,& ! x-component of velocity (m/s), beginning of timestep
@@ -766,8 +768,12 @@
          vold = vvel(i,j)
 
          ! (magnitude of relative ocean current)*rhow*drag*aice
-         vrel = aiu(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
-                                           (vocn(i,j) - vold)**2)  ! m/s
+         if (lineardrag) then
+            vrel = aiu(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
+                 (vocn(i,j) - vold)**2)  ! m/s
+         else
+            vrel = aiu(i,j)*rhow*Cw(i,j)*0.05d0  ! m/s
+         endif
          ! ice/ocean stress
          taux = vrel*waterx(i,j) ! NOTE this is not the entire
          tauy = vrel*watery(i,j) ! ocn stress term
@@ -823,7 +829,7 @@
                            taubx,      tauby,    &
                            uvel_init,  vvel_init,&
                            uvel,       vvel,     &
-                           Tb)
+                           Tb, lineardrag)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -834,6 +840,8 @@
          indxi   , & ! compressed index in i-direction
          indxj       ! compressed index in j-direction
 
+      logical (kind=log_kind), intent(in) :: lineardrag
+      
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Tb,       & ! seabed stress factor (N/m^2)
          uvel_init,& ! x-component of velocity (m/s), beginning of timestep
@@ -894,8 +902,13 @@
          vold = vvel(i,j)
 
          ! (magnitude of relative ocean current)*rhow*drag*aice
-         vrel = aiu(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
-                                           (vocn(i,j) - vold)**2)  ! m/s
+         if (lineardrag) then
+            vrel = aiu(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
+                 (vocn(i,j) - vold)**2)  ! m/s
+         else
+            vrel = aiu(i,j)*rhow*Cw(i,j)*0.05d0
+         endif
+         
          ! ice/ocean stress
          taux = vrel*waterx(i,j) ! NOTE this is not the entire
          tauy = vrel*watery(i,j) ! ocn stress term
