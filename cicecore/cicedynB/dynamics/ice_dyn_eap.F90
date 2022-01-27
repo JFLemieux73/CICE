@@ -494,7 +494,7 @@
                         taubx    (:,:,iblk), tauby   (:,:,iblk), & 
                         uvel_init(:,:,iblk), vvel_init(:,:,iblk),&
                         uvel     (:,:,iblk), vvel    (:,:,iblk), &
-                        Tbu      (:,:,iblk), .false.)
+                        Tbu      (:,:,iblk), 1)
 
       !-----------------------------------------------------------------
       ! evolution of structure tensor A
