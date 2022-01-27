@@ -190,9 +190,9 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
-      logical (kind=log_kind) :: calc_strair, viscous, lineardrag
+      logical (kind=log_kind) :: calc_strair, viscous
 
-      integer :: testC, rep_prs_option
+      integer :: testC, rep_prs_option, drag_option
 
       integer (kind=int_kind), dimension (nx_block,ny_block,max_blocks) :: &
          icetmask, &  ! ice extent mask (T-cell)
@@ -220,7 +220,7 @@
 
       viscous=.true.
       rep_prs_option=3 ! 1: normal, 2: rep_prs=P, 3: rep_prs=0
-      lineardrag=.true.
+      drag_option=3 ! 1: normal, 2: linear, 3: linear,aiu=1
       
       !-----------------------------------------------------------------
       ! Initialize
@@ -736,7 +736,7 @@
                               taubx    (:,:,iblk), tauby   (:,:,iblk), &
                               uvel_init(:,:,iblk), vvel_init(:,:,iblk),&
                               uvel     (:,:,iblk), vvel    (:,:,iblk), &
-                              Tbu      (:,:,iblk), lineardrag)
+                              Tbu      (:,:,iblk), drag_option)
 
             enddo
             !$TCXOMP END PARALLEL DO
@@ -859,7 +859,7 @@
                                  taubxE    (:,:,iblk), taubyE    (:,:,iblk), &
                                  uvelE_init(:,:,iblk), vvelE_init(:,:,iblk), &
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
-                                 TbE       (:,:,iblk), lineardrag)
+                                 TbE       (:,:,iblk), drag_option)
 
                   call step_vel (nx_block,             ny_block,             & ! N point
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
@@ -873,7 +873,7 @@
                                  taubxN    (:,:,iblk), taubyN    (:,:,iblk), &
                                  uvelN_init(:,:,iblk), vvelN_init(:,:,iblk), &
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
-                                 TbN       (:,:,iblk), lineardrag)
+                                 TbN       (:,:,iblk), drag_option)
 
                   
                   testC=1
