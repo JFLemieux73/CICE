@@ -271,10 +271,10 @@
 
 &domain_nml
     nprocs = 1
-    nx_global         = 80
-    ny_global         = 80
-    block_size_x      = 80
-    block_size_y      = 80
+    nx_global         = 20
+    ny_global         = 20
+    block_size_x      = 20
+    block_size_y      = 20
     max_blocks        = 1
     processor_shape   = 'slenderX2'
     distribution_type = 'cartesian'
@@ -546,7 +546,7 @@
     f_shear        = 'm'
     f_sig1         = 'd1'
     f_sig2         = 'd1'
-    f_sigP         = 'm' 
+    f_sigP         = 'd1' 
     f_dvidtt       = 'm' 
     f_dvidtd       = 'm' 
     f_daidtt       = 'm'
