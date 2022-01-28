@@ -692,7 +692,7 @@
                         taubx,      tauby,    &
                         uvel_init,  vvel_init,&
                         uvel,       vvel,     &
-                        Tbu, drag_option)
+                        Tbu, drag_option, set_v_zero)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -704,6 +704,8 @@
          indxui  , & ! compressed index in i-direction
          indxuj      ! compressed index in j-direction
 
+      logical (kind=log_kind) :: set_v_zero
+      
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Tbu,      & ! seabed stress factor (N/m^2)
          uvel_init,& ! x-component of velocity (m/s), beginning of timestep
@@ -765,7 +767,8 @@
 
          uold = uvel(i,j)
          vold = vvel(i,j)
-
+         if (set_v_zero) vold=0d0
+         
          ! (magnitude of relative ocean current)*rhow*drag*aice
          if (drag_option == 1) then
             vrel = aiu(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
@@ -802,6 +805,8 @@
          uvel(i,j) = (cca*cc1 + ccb*cc2) / ab2 ! m/s
          vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
 
+         if (set_v_zero) vvel(i,j)=0d0
+         
       ! calculate seabed stress component for outputs
          if (ksub == ndte) then ! on last subcycling iteration
           if ( seabed_stress ) then
@@ -830,7 +835,7 @@
                            taubx,      tauby,    &
                            uvel_init,  vvel_init,&
                            uvel,       vvel,     &
-                           Tb, drag_option)
+                           Tb, drag_option, set_v_zero)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -842,6 +847,8 @@
          indxi   , & ! compressed index in i-direction
          indxj       ! compressed index in j-direction
 
+      logical (kind=log_kind) :: set_v_zero
+      
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Tb,       & ! seabed stress factor (N/m^2)
          uvel_init,& ! x-component of velocity (m/s), beginning of timestep
@@ -900,7 +907,8 @@
 
          uold = uvel(i,j)
          vold = vvel(i,j)
-
+         if (set_v_zero) vold=0d0
+         
          ! (magnitude of relative ocean current)*rhow*drag*aice
          if (drag_option == 1) then
             vrel = aiu(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
@@ -931,6 +939,7 @@
              + massdti(i,j)*(brlx*vold + revp*vvel_init(i,j))
          uvel(i,j) = (cca*cc1 + ccb*cc2) / ab2 ! m/s
          vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
+         if (set_v_zero) vvel(i,j)=0d0
          ! calculate seabed stress component for outputs
          if (ksub == ndte .and. seabed_stress) then ! on last subcycling iteration
             taubx(i,j) = -uvel(i,j)*Tb(i,j) / ccc

@@ -9,3 +9,4 @@ grep 'vfactor=' ../cicecore/cicedynB/dynamics/ice_dyn_shared.F90
 grep 'rep_prs_option=' ../cicecore/cicedynB/dynamics/ice_dyn_evp.F90
 grep 'drag_option=' ../cicecore/cicedynB/dynamics/ice_dyn_evp.F90
 grep 'testC=' ../cicecore/cicedynB/dynamics/ice_dyn_evp.F90
+grep 'set_v_zero=' ../cicecore/cicedynB/dynamics/ice_dyn_evp.F90

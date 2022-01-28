@@ -190,7 +190,7 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
-      logical (kind=log_kind) :: calc_strair, viscous
+      logical (kind=log_kind) :: calc_strair, viscous, set_v_zero
 
       integer :: testC, rep_prs_option, drag_option
 
@@ -221,6 +221,7 @@
       viscous=.true.
       rep_prs_option=3 ! 1: normal, 2: rep_prs=P, 3: rep_prs=0
       drag_option=3 ! 1: normal, 2: linear, 3: linear,aiu=1
+      set_v_zero=.true.
       
       !-----------------------------------------------------------------
       ! Initialize
@@ -736,7 +737,7 @@
                               taubx    (:,:,iblk), tauby   (:,:,iblk), &
                               uvel_init(:,:,iblk), vvel_init(:,:,iblk),&
                               uvel     (:,:,iblk), vvel    (:,:,iblk), &
-                              Tbu      (:,:,iblk), drag_option)
+                              Tbu      (:,:,iblk), drag_option, set_v_zero)
 
             enddo
             !$TCXOMP END PARALLEL DO
@@ -859,7 +860,7 @@
                                  taubxE    (:,:,iblk), taubyE    (:,:,iblk), &
                                  uvelE_init(:,:,iblk), vvelE_init(:,:,iblk), &
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
-                                 TbE       (:,:,iblk), drag_option)
+                                 TbE       (:,:,iblk), drag_option, set_v_zero)
 
                   call step_vel (nx_block,             ny_block,             & ! N point
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
@@ -873,7 +874,7 @@
                                  taubxN    (:,:,iblk), taubyN    (:,:,iblk), &
                                  uvelN_init(:,:,iblk), vvelN_init(:,:,iblk), &
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
-                                 TbN       (:,:,iblk), drag_option)
+                                 TbN       (:,:,iblk), drag_option, set_v_zero)
 
                   
                   testC=1
