@@ -1501,7 +1501,8 @@
                              stress12T,  B2013       )
 
       use ice_dyn_shared, only: strain_rates_T, capping, &
-                                viscous_coeffs_and_rep_pressure_T
+                                viscous_coeffs_and_rep_pressure_T, &
+                                calc_shearT_DeltaT
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1568,7 +1569,10 @@
 
          if (B2013) then ! shearT and DeltaT are recalculated
 
-            
+            call calc_shearT_DeltaT (shrU(i,j),     shrU(i,j-1), &
+                                     shrU(i-1,j-1), shrU(i-1,j), &
+                                     divT,          tensionT,    &
+                                     shearT,        DeltaT    )
 
          endif
          
