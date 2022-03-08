@@ -192,7 +192,7 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
-      logical (kind=log_kind) :: calc_strair
+      logical (kind=log_kind) :: calc_strair, B2013
 
       integer (kind=int_kind), dimension (nx_block,ny_block,max_blocks) :: &
          icetmask, &  ! ice extent mask (T-cell)
@@ -692,6 +692,8 @@
 
       else ! evp_algorithm == standard_2d (Standard CICE)
 
+         B2013 = .false.
+         
          do ksub = 1,ndte        ! subcycling
 
             select case (grid_ice)
@@ -762,8 +764,35 @@
 
             case('CD','C')
 
+               if (B2013) then
+
+                  !$OMP PARALLEL DO PRIVATE(iblk)
+               do iblk = 1, nblocks
+                  call shear_strain_rate_U (nx_block,             ny_block,             &
+                                            icellu    (iblk)    ,                       &
+                                            indxui    (:,iblk)  , indxuj      (:,iblk), &
+                                            uvelE     (:,:,iblk), vvelN     (:,:,iblk), &
+                                            uvel      (:,:,iblk), vvel      (:,:,iblk), &
+                                            dxE       (:,:,iblk), dyN       (:,:,iblk), &
+                                            dxU       (:,:,iblk), dyU       (:,:,iblk), &
+                                            ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
+                                            ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
+                                            epm       (:,:,iblk), npm       (:,:,iblk), &
+                                            uvm       (:,:,iblk),                       &
+                                            shrU (:,:,iblk))   
+               enddo
+               !$OMP END PARALLEL DO
+
+               call ice_timer_start(timer_bound)
+               call ice_HaloUpdate (shrU,          halo_info, &
+                                    field_loc_NEcorner,  field_type_scalar)
+               call ice_timer_stop(timer_bound)
+               
+               endif
+               
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
+
                   call stress_T (nx_block,             ny_block,             &
                                                        icellt(iblk),         &
                                  indxti      (:,iblk), indxtj      (:,iblk), &
@@ -772,10 +801,10 @@
                                  dxN       (:,:,iblk), dyE       (:,:,iblk), &
                                  dxT       (:,:,iblk), dyT       (:,:,iblk), &
                                                        DminTarea (:,:,iblk), &
-                                 strength  (:,:,iblk),                       &
+                                 strength  (:,:,iblk), shrU      (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
-                                 stress12T (:,:,iblk) )
+                                 stress12T (:,:,iblk), B2013)
 
                   !-----------------------------------------------------------------
                   ! on last subcycle, save quantities for mechanical redistribution
@@ -1466,10 +1495,10 @@
                              dxN,        dyE,        &
                              dxT,        dyT,        &
                                          DminTarea,  & 
-                             strength,               &
+                             strength,   shrU,       &
                              zetax2T,    etax2T,     &
                              stresspT,   stressmT,   & 
-                             stress12T               )
+                             stress12T,  B2013       )
 
       use ice_dyn_shared, only: strain_rates_T, capping, &
                                 viscous_coeffs_and_rep_pressure_T
@@ -1492,6 +1521,7 @@
          dxT      , & ! width of T-cell through the middle (m)
          dyT      , & ! height of T-cell through the middle (m)
          strength , & ! ice strength (N/m)
+         shrU     , & ! shear strain rate at the U point
          DminTarea    ! deltaminEVP*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
@@ -1501,6 +1531,8 @@
          stressmT , & ! sigma11-sigma22
          stress12T    ! sigma12
 
+      logical (kind=log_kind), intent(in) :: B2013
+      
       ! local variables
 
       integer (kind=int_kind) :: &
@@ -1515,7 +1547,6 @@
       !-----------------------------------------------------------------
       ! Initialize
       !-----------------------------------------------------------------
-
 
       do ij = 1, icellt
          i = indxti(ij)
@@ -1535,6 +1566,12 @@
                               divT,       tensionT,   &
                               shearT,     DeltaT      )
 
+         if (B2013) then ! shearT and DeltaT are recalculated
+
+            
+
+         endif
+         
          !-----------------------------------------------------------------
          ! viscous coefficients and replacement pressure at T point
          !-----------------------------------------------------------------

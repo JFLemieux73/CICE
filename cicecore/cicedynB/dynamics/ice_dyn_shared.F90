@@ -1931,6 +1931,53 @@
 
     end subroutine strain_rates_T
 
+
+!=======================================================================
+
+    subroutine calc_shearT_DeltaT (shrUij,     shrUijm1, &
+                                   shrUim1jm1, shrUim1j, &
+                                   divT,       tensionT, &
+                                   shearT,     DeltaT    )
+
+      real (kind=dbl_kind), intent(in) :: &
+         shrUij    , & ! shear strain rate at U point (i,j)
+         shrUijm1  , & ! shear strain rate at U point (i,j-1)
+         shrUim1jm1, & ! shear strain rate at U point (i-1,j-1)
+         shrUim1j,   & ! shear strain rate at U point (i-1,j)
+         divT,       &
+         tensionT
+         
+      real (kind=dbl_kind), intent(inout):: &
+        shearT, DeltaT      ! strain rates at the T point
+         
+      character(len=*), parameter :: subname = '(calc_shearT_DeltaT)'
+
+      ! local variables
+      real (kind=dbl_kind) :: shearTsqr
+
+      logical (kind=log_kind) :: B2009
+      
+      !-----------------------------------------------------------------
+      ! strain rates
+      ! NOTE these are actually strain rates * area  (m^2/s)
+      !-----------------------------------------------------------------
+
+      B2009 = .false.
+
+      shearT = ( shrUij + shrUijm1 + shrUim1jm1 + shrUim1j ) / 4d0
+      
+      if (B2009) then
+
+         DeltaT = sqrt(divT**2 + e_factor*(tensionT**2 + shearT**2))     
+
+      else
+         
+         shearTsqr = (shrUij**2 + shrUijm1**2 + shrUim1jm1**2 + shrUim1j**2)/4d0
+         DeltaT = sqrt(divT**2 + e_factor*(tensionT**2 + shearTsqr))
+
+      endif
+
+    end subroutine calc_shearT_DeltaT
     
 !=======================================================================
 
