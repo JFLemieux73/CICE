@@ -2035,6 +2035,86 @@
       DeltaU = sqrt(divU**2 + e_factor*(tensionU**2 + shearU**2))
 
     end subroutine strain_rates_U
+
+    
+    !=======================================================================
+
+! Computes and stores the shear strain rate at U points based on C-grid
+! velocity components (uvelE and vvelN)
+      
+    subroutine shear_strain_rate_U (nx_block,   ny_block,  & 
+                                    icellu,    &  
+                                    indxui,     indxuj,    &
+                                    uvelE,      vvelN,     &
+                                    uvelU,      vvelU,     &
+                                    dxE,        dyN,       &
+                                    dxU,        dyU,       &
+                                    ratiodxN,   ratiodxNr, &
+                                    ratiodyE,   ratiodyEr, &
+                                    epm,  npm,  uvm,       &
+                                    shrU)
+
+      integer (kind=int_kind), intent(in) :: & 
+         nx_block, ny_block, & ! block dimensions
+         icellu                ! no. of cells where iceumask = 1
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxui   , & ! compressed index in i-direction
+         indxuj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         uvelE    , & ! x-component of velocity (m/s) at the E point
+         vvelN    , & ! y-component of velocity (m/s) at the N point
+         uvelU    , & ! x-component of velocity (m/s) at the U point
+         vvelU    , & ! y-component of velocity (m/s) at the U point
+         dxE      , & ! width  of E-cell through the middle (m)
+         dyN      , & ! height of N-cell through the middle (m)
+         dxU      , & ! width  of U-cell through the middle (m)
+         dyU      , & ! height of U-cell through the middle (m)
+         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) factor for BCs across coastline
+         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) factor for BCs across coastline
+         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) factor for BCs across coastline
+         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) factor for BCs across coastline
+         epm      , & ! E-cell mask
+         npm      , & ! N-cell mask
+         uvm          ! U-cell mask
+      
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
+         shrU         ! shear strain rate at U point (m^2/s)
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, ij
+
+      real (kind=dbl_kind) :: &                     
+         uEijp1, uEij, vNip1j, vNij
+      
+      character(len=*), parameter :: subname = '(shear_strain_rate_U)'
+      
+      do ij = 1, icellu
+         i = indxui(ij)
+         j = indxuj(ij)
+         
+         uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
+                +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
+         uEij   = uvelE(i,j) * epm(i,j) &
+                +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * uvelE(i,j+1)
+         vNip1j = vvelN(i+1,j) * npm(i+1,j) &
+                +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * vvelN(i,j)
+         vNij   = vvelN(i,j) * npm(i,j) &
+                +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * vvelN(i+1,j)
+
+         ! shear strain rate  =  2*e_12
+         ! NOTE these are actually strain rates * area  (m^2/s)
+         shrU(i,j) = dxU(i,j) * ( uEijp1 - uEij ) &
+                   - uvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
+                   + dyU(i,j) * ( vNip1j - vNij ) &
+                   - vvelU(i,j) * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )
+         
+      enddo                     ! ij
+
+    end subroutine shear_strain_rate_U
     
  !=======================================================================
  ! Computes viscous coefficients and replacement pressure for stress 

@@ -186,8 +186,9 @@
 
       real (kind=dbl_kind), allocatable :: &
          zetax2T(:,:,:), & ! zetax2 = 2*zeta (bulk viscous coeff)
-         etax2T(:,:,:)     ! etax2  = 2*eta  (shear viscous coeff)
-      
+         etax2T(:,:,:),  & ! etax2  = 2*eta  (shear viscous coeff)
+         shrU(:,:,:)       ! shear strain rate at U point
+         
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
@@ -223,8 +224,10 @@
 
          allocate(zetax2T(nx_block,ny_block,max_blocks))
          allocate(etax2T(nx_block,ny_block,max_blocks))
+         allocate(shrU(nx_block,ny_block,max_blocks))
          zetax2T(:,:,:) = c0
          etax2T (:,:,:) = c0
+         shrU   (:,:,:) = c0
          
       endif
       
@@ -1708,7 +1711,7 @@
       enddo                     ! ij
 
       end subroutine stress_U
-    
+
 !=======================================================================
 
 ! Computes divergence of stress tensor at the E or N point for the mom equation
