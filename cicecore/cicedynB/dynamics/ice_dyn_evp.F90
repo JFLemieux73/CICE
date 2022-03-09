@@ -114,7 +114,7 @@
       use ice_dyn_evp_1d, only: ice_dyn_evp_1d_copyin, ice_dyn_evp_1d_kernel, &
           ice_dyn_evp_1d_copyout
       use ice_dyn_shared, only: evp_algorithm, stack_velocity_field, unstack_velocity_field, DminTarea
-      use ice_dyn_shared, only: deformations, deformations_T
+      use ice_dyn_shared, only: deformations, deformations_T, shear_strain_rate_U
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
 
@@ -692,7 +692,7 @@
 
       else ! evp_algorithm == standard_2d (Standard CICE)
 
-         B2013 = .false.
+         B2013 = .true.
          
          do ksub = 1,ndte        ! subcycling
 

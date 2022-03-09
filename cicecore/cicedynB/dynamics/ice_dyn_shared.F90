@@ -29,7 +29,7 @@
                 alloc_dyn_shared, &
                 deformations, deformations_T, &
                 strain_rates, strain_rates_T, strain_rates_U, &
-                calc_shearT_DeltaT, &
+                shear_strain_rate_U, calc_shearT_DeltaT, &
                 viscous_coeffs_and_rep_pressure, &
                 viscous_coeffs_and_rep_pressure_T, &
                 viscous_coeffs_and_rep_pressure_T2U, &
