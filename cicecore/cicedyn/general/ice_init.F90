@@ -3325,8 +3325,8 @@
             enddo               ! j
             enddo               ! i
          else
-            uvel = c0
-            vvel = c0
+!            uvel = c0
+!            vvel = c0
          endif
 
       endif                     ! ice_ic
@@ -3411,6 +3411,8 @@
             write(nu_diag,*) 'closing file ',TRIM(init_file)
             call flush(nu_diag)
          endif
+
+         print *, 'jlem velo init', uvel(50,40,1), vvel(50,40,1), uvelE(50,40,1), vvelN(50,40,1)
 
          end subroutine readnc
 
