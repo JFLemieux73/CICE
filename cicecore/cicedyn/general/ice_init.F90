@@ -2711,6 +2711,9 @@
          nt_strata    (nt_ipnd,1) = nt_apnd ! on melt pond area
       endif
 
+      ! read velocities
+      call readnc(uvel, vvel, uvelE, vvelN)
+
       !-----------------------------------------------------------------
       ! Set state variables
       !-----------------------------------------------------------------
@@ -2754,10 +2757,10 @@
 
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
 
-         call grid_average_X2Y('A',uvel,'U',uvelN,'N')
-         call grid_average_X2Y('A',vvel,'U',vvelN,'N')
-         call grid_average_X2Y('A',uvel,'U',uvelE,'E')
-         call grid_average_X2Y('A',vvel,'U',vvelE,'E')
+         ! call grid_average_X2Y('A',uvel,'U',uvelN,'N')
+         ! call grid_average_X2Y('A',vvel,'U',vvelN,'N')
+         ! call grid_average_X2Y('A',uvel,'U',uvelE,'E')
+         ! call grid_average_X2Y('A',vvel,'U',vvelE,'E')
 
          ! Halo update on North, East faces
          call ice_HaloUpdate(uvelN, halo_info, &
@@ -3333,6 +3336,83 @@
          file=__FILE__, line=__LINE__)
 
       end subroutine set_state_var
+
+      !=======================================================================
+
+! Read single-category state variables from netcdf
+!
+! author: FD 2012-11 (from initnc)
+
+      subroutine readnc(uvel, vvel, uvelE, vvelN)
+
+         use ice_fileunits, only: nu_diag
+         use ice_read_write
+         use ice_constants, only: field_loc_NEcorner, field_loc_Eface, field_loc_Nface, field_type_vector
+         use ice_domain_size, only: max_blocks
+         use ice_blocks, only: nx_block, ny_block
+   
+         ! arguments
+         real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks), intent(inout) :: &
+            uvel    , & ! uvel (m/s)
+            vvel    , &    ! vvel (m/s)
+            uvelE    , & ! uvel (m/s)
+            vvelN        ! vvel (m/s)
+   
+         ! locals
+         integer (kind=int_kind) :: &
+            i, j,     &     ! index inside block
+            iblk,     &     ! block index
+            n,        &     ! ice category index
+            it,       &     ! tracer index
+            fid_init        ! file id for netCDF init file
+   
+         character (char_len) :: &
+               fieldname    ! field name in netcdf file
+         character (char_len_long) :: &        ! input data file names
+               init_file = 'init_cice.nc'
+         logical (kind=log_kind) :: diag=.true.
+   
+         if (my_task == master_task) then
+   
+             write (nu_diag,*) ' '
+             write (nu_diag,*) 'Initial ice file: ', trim(init_file)
+             call flush(nu_diag)
+   
+             call ice_open_nc(init_file,fid_init)
+   
+         endif
+   
+         fieldname='uvel'
+   
+         call ice_read_nc(fid_init,1,fieldname,uvel,diag, &
+                       field_loc=field_loc_NEcorner, &
+                       field_type=field_type_vector)
+   
+         fieldname='vvel'
+   
+         call ice_read_nc(fid_init,1,fieldname,vvel,diag, &
+                       field_loc=field_loc_NEcorner, &
+                       field_type=field_type_vector)
+
+         fieldname='uvelE'
+   
+         call ice_read_nc(fid_init,1,fieldname,uvelE,diag, &
+                       field_loc=field_loc_Eface, &
+                       field_type=field_type_vector)
+   
+         fieldname='vvelN'
+   
+         call ice_read_nc(fid_init,1,fieldname,vvelN,diag, &
+                       field_loc=field_loc_Nface, &
+                       field_type=field_type_vector)
+
+         if (my_task == master_task) then
+            call ice_close_nc(fid_init)
+            write(nu_diag,*) 'closing file ',TRIM(init_file)
+            call flush(nu_diag)
+         endif
+
+         end subroutine readnc
 
 !=======================================================================
 
