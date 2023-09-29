@@ -237,6 +237,8 @@
           tarear, uarear, earear, narear, grid_average_X2Y, uarea, &
           grid_type, grid_ice, &
           grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
+      use ice_history_shared, only: construct_filename
+      use ice_init, only: readnc
       use ice_state, only: aice, aiU, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, &
           aice_init, aice0, aicen, vicen, strength
@@ -291,6 +293,8 @@
 
       type (block) :: &
          this_block   ! block information for current block
+
+      character(len=char_len_long) :: filename
 
       character(len=*), parameter :: subname = '(evp)'
 
@@ -1065,6 +1069,11 @@
                                     uvel, vvel)
 
             enddo                     ! subcycling
+
+            ! construct filename
+            call construct_filename(filename,'nc',ns=1)
+            ! read in velocities
+            call readnc(uvel, vvel, uvelE, vvelN, filename)
 
             !-----------------------------------------------------------------
             ! save quantities for mechanical redistribution

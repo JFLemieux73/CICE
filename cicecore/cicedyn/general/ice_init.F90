@@ -43,7 +43,7 @@
                      ! 'none'     => no ice
                      ! filename   => read file
 
-      public :: input_data, init_state, set_state_var
+      public :: input_data, init_state, set_state_var, readnc
 
 !=======================================================================
 
@@ -2712,7 +2712,7 @@
       endif
 
       ! read velocities
-      call readnc(uvel, vvel, uvelE, vvelN)
+      ! call readnc(uvel, vvel, uvelE, vvelN)
 
       !-----------------------------------------------------------------
       ! Set state variables
@@ -2757,10 +2757,10 @@
 
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
 
-         ! call grid_average_X2Y('A',uvel,'U',uvelN,'N')
-         ! call grid_average_X2Y('A',vvel,'U',vvelN,'N')
-         ! call grid_average_X2Y('A',uvel,'U',uvelE,'E')
-         ! call grid_average_X2Y('A',vvel,'U',vvelE,'E')
+         call grid_average_X2Y('A',uvel,'U',uvelN,'N')
+         call grid_average_X2Y('A',vvel,'U',vvelN,'N')
+         call grid_average_X2Y('A',uvel,'U',uvelE,'E')
+         call grid_average_X2Y('A',vvel,'U',vvelE,'E')
 
          ! Halo update on North, East faces
          call ice_HaloUpdate(uvelN, halo_info, &
@@ -3343,7 +3343,7 @@
 !
 ! author: FD 2012-11 (from initnc)
 
-      subroutine readnc(uvel, vvel, uvelE, vvelN)
+      subroutine readnc(uvel, vvel, uvelE, vvelN, init_file)
 
          use ice_fileunits, only: nu_diag
          use ice_read_write
@@ -3357,6 +3357,9 @@
             vvel    , &    ! vvel (m/s)
             uvelE    , & ! uvel (m/s)
             vvelN        ! vvel (m/s)
+
+         character (len=*) :: &
+            init_file    ! input data file name
    
          ! locals
          integer (kind=int_kind) :: &
@@ -3368,8 +3371,7 @@
    
          character (char_len) :: &
                fieldname    ! field name in netcdf file
-         character (char_len_long) :: &        ! input data file names
-               init_file = 'init_cice.nc'
+
          logical (kind=log_kind) :: diag=.true.
    
          if (my_task == master_task) then
