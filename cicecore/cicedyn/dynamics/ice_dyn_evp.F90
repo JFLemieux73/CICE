@@ -993,66 +993,128 @@
             enddo
             !$OMP END PARALLEL DO
 
-            !$OMP PARALLEL DO PRIVATE(iblk)
-            do iblk = 1, nblocks
+            if (MOD(ksub,2) .ne. 0) then ! odd iteration
 
-                call stepu_C (nx_block            , ny_block            , & ! u, E point
-                              icellE        (iblk), Cdn_ocnE  (:,:,iblk), &
-                              indxEi      (:,iblk), indxEj      (:,iblk), &
-                                                    aiE       (:,:,iblk), &
-                              uocnE     (:,:,iblk), vocnE     (:,:,iblk), &
-                              waterxE   (:,:,iblk), forcexE   (:,:,iblk), &
-                              emassdti  (:,:,iblk), fmE       (:,:,iblk), &
-                              strintxE  (:,:,iblk), taubxE    (:,:,iblk), &
-                              uvelE_init(:,:,iblk),                       &
-                              uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
-                                 TbE       (:,:,iblk))
+                  !$OMP PARALLEL DO PRIVATE(iblk)
+                  do iblk = 1, nblocks
 
-                call stepv_C (nx_block,             ny_block,             & ! v, N point
-                              icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
-                              indxNi      (:,iblk), indxNj      (:,iblk), &
-                                                    aiN       (:,:,iblk), &
-                              uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
-                              wateryN   (:,:,iblk), forceyN   (:,:,iblk), &
-                              nmassdti  (:,:,iblk), fmN       (:,:,iblk), &
-                              strintyN  (:,:,iblk), taubyN    (:,:,iblk), &
-                              vvelN_init(:,:,iblk),                       &
-                              uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
-                              TbN       (:,:,iblk))
-            enddo
-            !$OMP END PARALLEL DO
+                     call stepu_C (nx_block            , ny_block            , & ! u, E point
+                                   icellE        (iblk), Cdn_ocnE  (:,:,iblk), &
+                                   indxEi      (:,iblk), indxEj      (:,iblk), &
+                                   aiE       (:,:,iblk), &
+                                   uocnE     (:,:,iblk), vocnE     (:,:,iblk), &
+                                   waterxE   (:,:,iblk), forcexE   (:,:,iblk), &
+                                   emassdti  (:,:,iblk), fmE       (:,:,iblk), &
+                                   strintxE  (:,:,iblk), taubxE    (:,:,iblk), &
+                                   uvelE_init(:,:,iblk),                       &
+                                   uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
+                                   TbE       (:,:,iblk))
+                   
+                  enddo
+                  !$OMP END PARALLEL DO
+                ! calls ice_haloUpdate, controls bundles and masks
+                  call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+                                       field_loc_Eface, field_type_vector, &
+                                       uvelE)
+                  call grid_average_X2Y('A', uvelE, 'E', uvelN, 'N')
+                  uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
 
-            ! calls ice_haloUpdate, controls bundles and masks
-            call dyn_haloUpdate (halo_info,       halo_info_mask,    &
-                                 field_loc_Eface, field_type_vector, &
-                                 uvelE)
-            call dyn_haloUpdate (halo_info,       halo_info_mask,    &
-                                 field_loc_Nface, field_type_vector, &
-                                 vvelN)
+                  !$OMP PARALLEL DO PRIVATE(iblk)
+                  do iblk = 1, nblocks
 
-            call grid_average_X2Y('A', uvelE, 'E', uvelN, 'N')
-            call grid_average_X2Y('A', vvelN, 'N', vvelE, 'E')
-            uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
-            vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
+                     call stepv_C (nx_block,             ny_block,             & ! v, N point
+                                   icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
+                                   indxNi      (:,iblk), indxNj      (:,iblk), &
+                                   aiN       (:,:,iblk), &
+                                   uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
+                                   wateryN   (:,:,iblk), forceyN   (:,:,iblk), &
+                                   nmassdti  (:,:,iblk), fmN       (:,:,iblk), &
+                                   strintyN  (:,:,iblk), taubyN    (:,:,iblk), &
+                                   vvelN_init(:,:,iblk),                       &
+                                   uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
+                                   TbN       (:,:,iblk))
+               
+                  enddo
+                  !$OMP END PARALLEL DO
 
-            ! calls ice_haloUpdate, controls bundles and masks
-            call dyn_haloUpdate (halo_info,       halo_info_mask,    &
-                                 field_loc_Nface, field_type_vector, &
-                                 uvelN)
-            call dyn_haloUpdate (halo_info,       halo_info_mask,    &
-                                 field_loc_Eface, field_type_vector, &
-                                 vvelE)
+                   !$OMP END PARALLEL DO
 
-            call grid_average_X2Y('S', uvelE, 'E', uvel, 'U')
-            call grid_average_X2Y('S', vvelN, 'N', vvel, 'U')
+                  call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+                                       field_loc_Nface, field_type_vector, &
+                                       vvelN)
+                  call grid_average_X2Y('A', vvelN, 'N', vvelE, 'E')
+                  vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
 
-            uvel(:,:,:) = uvel(:,:,:)*uvm(:,:,:)
-            vvel(:,:,:) = vvel(:,:,:)*uvm(:,:,:)
-            ! U fields at NE corner
-            ! calls ice_haloUpdate, controls bundles and masks
-            call dyn_haloUpdate (halo_info,          halo_info_mask,    &
-                                 field_loc_NEcorner, field_type_vector, &
-                                 uvel, vvel)
+               else ! even iteration
+
+                  !$OMP PARALLEL DO PRIVATE(iblk)
+                  do iblk = 1, nblocks
+
+                     call stepv_C (nx_block,             ny_block,             & ! v, N point
+                                   icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
+                                   indxNi      (:,iblk), indxNj      (:,iblk), &
+                                   aiN       (:,:,iblk), &
+                                   uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
+                                   wateryN   (:,:,iblk), forceyN   (:,:,iblk), &
+                                   nmassdti  (:,:,iblk), fmN       (:,:,iblk), &
+                                   strintyN  (:,:,iblk), taubyN    (:,:,iblk), &
+                                   vvelN_init(:,:,iblk),                       &
+                                   uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
+                                   TbN       (:,:,iblk))
+               
+                  enddo
+                  !$OMP END PARALLEL DO
+
+                  call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+                                       field_loc_Nface, field_type_vector, &
+                                       vvelN)
+                  call grid_average_X2Y('A', vvelN, 'N', vvelE, 'E')
+                  vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
+
+                  !$OMP PARALLEL DO PRIVATE(iblk)
+                  do iblk = 1, nblocks
+
+                     call stepu_C (nx_block            , ny_block            , & ! u, E point
+                                   icellE        (iblk), Cdn_ocnE  (:,:,iblk), &
+                                   indxEi      (:,iblk), indxEj      (:,iblk), &
+                                   aiE       (:,:,iblk), &
+                                   uocnE     (:,:,iblk), vocnE     (:,:,iblk), &
+                                   waterxE   (:,:,iblk), forcexE   (:,:,iblk), &
+                                   emassdti  (:,:,iblk), fmE       (:,:,iblk), &
+                                   strintxE  (:,:,iblk), taubxE    (:,:,iblk), &
+                                   uvelE_init(:,:,iblk),                       &
+                                   uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
+                                   TbE       (:,:,iblk))
+                   
+                  enddo
+                  !$OMP END PARALLEL DO
+
+                  call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+                                       field_loc_Eface, field_type_vector, &
+                                       uvelE)
+                  call grid_average_X2Y('A', uvelE, 'E', uvelN, 'N')
+                  uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
+
+               endif
+
+               ! calls ice_haloUpdate, controls bundles and masks
+               !call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+               !                     field_loc_Nface, field_type_vector, &
+               !                     uvelN)
+               !call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+               !                     field_loc_Eface, field_type_vector, &
+               !                     vvelE)
+
+               call grid_average_X2Y('S', uvelE, 'E', uvel, 'U')
+               call grid_average_X2Y('S', vvelN, 'N', vvel, 'U')
+
+               uvel(:,:,:) = uvel(:,:,:)*uvm(:,:,:)
+               vvel(:,:,:) = vvel(:,:,:)*uvm(:,:,:)
+               ! U fields at NE corner
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_haloUpdate (halo_info,          halo_info_mask,    &
+                                    field_loc_NEcorner, field_type_vector, &
+                                    uvel, vvel)
 
          enddo                     ! subcycling
 
