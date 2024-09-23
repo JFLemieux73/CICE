@@ -2777,7 +2777,7 @@
       use ice_blocks, only: block, get_block, nx_block, ny_block
       use ice_domain, only: nblocks, blocks_ice, halo_info
       use ice_domain_size, only: ncat, nilyr, nslyr, n_iso, n_aero, nfsd
-      use ice_flux, only: sst, Tf, Tair, salinz, Tmltz
+      use ice_flux, only: sst, Tf, Tair, salinz, Tmltz, hwater
       use ice_grid, only: tmask, umask, ULON, TLAT, grid_ice, grid_average_X2Y
       use ice_boundary, only: ice_HaloUpdate
       use ice_constants, only: field_loc_Nface, field_loc_Eface, field_type_scalar
@@ -2974,7 +2974,8 @@
                              salinz(:,:,:, iblk), Tmltz(:,:,:,  iblk), &
                              aicen(:,:,  :,iblk), trcrn(:,:,:,:,iblk), &
                              vicen(:,:,  :,iblk), vsnon(:,:,  :,iblk), &
-                             uvel (:,:,    iblk), vvel (:,:,    iblk))
+                             uvel (:,:,    iblk), vvel (:,:,    iblk), &
+                             hwater (:,:,    iblk))
 
       enddo                     ! iblk
       !$OMP END PARALLEL DO
@@ -3072,12 +3073,14 @@
                                 salinz,   Tmltz, &
                                 aicen,    trcrn, &
                                 vicen,    vsnon, &
-                                uvel,     vvel)
+                                uvel,     vvel, &
+                                hwater)
 
 
       use ice_arrays_column, only: hin_max
       use ice_domain_size, only: nilyr, nslyr, nx_global, ny_global, ncat
       use ice_grid, only: dxrect, dyrect
+!      use ice_flux, only: hwater
       use ice_forcing, only: ice_data_type, ice_data_conc, ice_data_dist
 
       integer (kind=int_kind), intent(in) :: &
@@ -3118,7 +3121,8 @@
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
          uvel    , & ! ice velocity B grid
-         vvel        !
+         vvel    , & !
+         hwater
 
       ! local variables
       integer (kind=int_kind) :: &
@@ -3132,7 +3136,8 @@
          icells          ! number of cells initialized with ice
 
       logical (kind=log_kind) :: &
-         in_slot, in_cyl ! boxslotcyl flags
+         in_slot, in_cyl, & ! boxslotcyl flags
+         groundingTest ! mv to ice_in
 
       real (kind=dbl_kind) :: &  ! boxslotcyl parameters
          diam    , & ! cylinder diameter
@@ -3560,6 +3565,23 @@
          endif
 
       endif                     ! ice_ic
+
+      groundingTest = .true. 
+      if (groundingTest) then
+
+         do j = 1, ny_block
+            do i = 1, nx_block
+               if (tmask(i,j)) then
+                  if (i == 75) then
+                     hwater(i,j) = 5.0 ! shoal
+                  else
+                     hwater(i,j) = 100.0 ! deep
+                  endif
+               endif
+               enddo
+            enddo
+               
+      endif
 
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &

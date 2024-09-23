@@ -1396,7 +1396,6 @@
 
          docalc_tbu = merge(c1,c0,hwu < threshold_hw)
 
-
          au  = grid_neighbor_max(aice, i, j, l_grid_location)
          hu  = grid_neighbor_max(vice, i, j, l_grid_location)
 
