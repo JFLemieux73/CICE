@@ -1052,8 +1052,6 @@
                           uvelE,      vvelE,    &
                           vvelN,      Tb)
 
-      use ice_grid, only: grid_neighbor_min_abs
-
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
          icell                 ! total count when ice[en]mask is true
@@ -1119,8 +1117,9 @@
          taux = vrel*waterx(i,j) ! NOTE this is not the entire
 
          ! seabed stress
-         vE = grid_neighbor_min_abs(vvelN, i, j, 'N2E')
+!         vE = grid_neighbor_min_abs(vvelN, i, j, 'N2E')
 !         ccc = sqrt(uold**2 + vold**2) + u0
+         vE = min( abs(vvelN(i,j)),abs(vvelN(i+1,j)),abs(vvelN(i+1,j-1)),abs(vvelN(i,j-1)) )
          ccc = sqrt(uold**2 + vE**2) + u0
          Cb  = Tb(i,j) / ccc ! for seabed stress
 
@@ -1157,8 +1156,6 @@
                           vvel_init,            &
                           uvelN,      vvelN,    &
                           uvelE, Tb)
-
-      use ice_grid, only: grid_neighbor_min_abs
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1225,8 +1222,9 @@
          tauy = vrel*watery(i,j) ! NOTE this is not the entire ocn stress
 
          ! seabed stress
-         uN = grid_neighbor_min_abs(uvelE, i, j, 'E2N')
+!         uN = grid_neighbor_min_abs(uvelE, i, j, 'E2N')
 !         ccc = sqrt(uold**2 + vold**2) + u0
+         uN = min( abs(uvelE(i,j)),abs(uvelE(i-1,j)),abs(uvelE(i-1,j+1)),abs(uvelE(i,j+1)) )
          ccc = sqrt(uN**2 + vold**2) + u0
          Cb  = Tb(i,j) / ccc ! for seabed stress
 
