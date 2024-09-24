@@ -50,7 +50,7 @@
       private
       public :: init_grid1, init_grid2, grid_average_X2Y, makemask, &
                 alloc_grid, dealloc_grid, &
-                grid_neighbor_min, grid_neighbor_max
+                grid_neighbor_min, grid_neighbor_max, grid_neighbor_min_abs
 
       character (len=char_len_long), public :: &
          grid_format  , & ! file format ('bin'=binary or 'nc'=netcdf)
@@ -3824,6 +3824,34 @@
       end select
 
       end function grid_neighbor_max
+
+!=======================================================================
+! Compute the minimum of the absolute values of a field at E (N) from 
+! adjacent N (E) values.
+!
+      real(kind=dbl_kind) function grid_neighbor_min_abs(field, i, j, grid_loc_info) result(mini)
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         field    ! field defined at N or E point (initial location)
+
+      integer (kind=int_kind), intent(in) :: &
+         i, j
+
+      character(len=*), intent(in) :: &
+         grid_loc_info ! initial grid location to final grid location (N2E, E2N)
+
+      character(len=*), parameter :: subname = '(grid_neighbor_min_abs)'
+
+      select case (trim(grid_loc_info))
+         case('N2E')
+            mini = min(abs(field(i,j)), abs(field(i+1,j)), abs(field(i+1,j-1)), abs(field(i,j-1)))
+         case('E2N')
+            mini = min(abs(field(i,j)), abs(field(i-1,j)), abs(field(i-1,j+1)), abs(field(i,j+1)))
+         case default
+            call abort_ice(subname // ' unknown grid_loc_info: ' // grid_loc_info, file=__FILE__, line=__LINE__)
+      end select
+
+    end function grid_neighbor_min_abs
 
 !=======================================================================
 ! The following code is used for obtaining the coordinates of the grid

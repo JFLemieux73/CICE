@@ -1052,7 +1052,7 @@
                           uvelE,      vvelE,    &
                           vvelN,      Tb)
 
- !     use ice_grid, only: grid_neighbor_min
+      use ice_grid, only: grid_neighbor_min_abs
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1104,7 +1104,7 @@
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
-
+      
       do ij =1, icell
          i = indxi(ij)
          j = indxj(ij)
@@ -1119,9 +1119,9 @@
          taux = vrel*waterx(i,j) ! NOTE this is not the entire
 
          ! seabed stress
-!         vE = grid_neighbor_min(abs(vvelN), i, j, 'E')
-        ccc = sqrt(uold**2 + vold**2) + u0
-!         ccc = sqrt(uold**2 + vE**2) + u0
+         vE = grid_neighbor_min_abs(vvelN, i, j, 'N2E')
+!         ccc = sqrt(uold**2 + vold**2) + u0
+         ccc = sqrt(uold**2 + vE**2) + u0
          Cb  = Tb(i,j) / ccc ! for seabed stress
 
          ! revp = 0 for classic evp, 1 for revised evp
@@ -1158,7 +1158,7 @@
                           uvelN,      vvelN,    &
                           uvelE, Tb)
 
-!      use ice_grid, only: grid_neighbor_min
+      use ice_grid, only: grid_neighbor_min_abs
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1225,9 +1225,9 @@
          tauy = vrel*watery(i,j) ! NOTE this is not the entire ocn stress
 
          ! seabed stress
-!         uN = grid_neighbor_min(abs(uvelE), i, j, 'N')
-         ccc = sqrt(uold**2 + vold**2) + u0
-!         ccc = sqrt(uN**2 + vold**2) + u0
+         uN = grid_neighbor_min_abs(uvelE, i, j, 'E2N')
+!         ccc = sqrt(uold**2 + vold**2) + u0
+         ccc = sqrt(uN**2 + vold**2) + u0
          Cb  = Tb(i,j) / ccc ! for seabed stress
 
          ! revp = 0 for classic evp, 1 for revised evp
