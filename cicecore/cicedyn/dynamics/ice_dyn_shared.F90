@@ -1049,8 +1049,10 @@
                           massdti,    fm,       &
                           strintx,    taubx,    &
                           uvel_init,            &
-                          uvel,       vvel,     &
-                          Tb)
+                          uvelE,      vvelE,    &
+                          vvelN,      Tb)
+
+ !     use ice_grid, only: grid_neighbor_min
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1072,10 +1074,11 @@
          fm      , & ! Coriolis param. * mass in e-cell (kg/s)
          strintx , & ! divergence of internal ice stress, x (N/m^2)
          Cw      , & ! ocean-ice neutral drag coefficient
-         vvel        ! y-component of velocity (m/s) interpolated to E location
+         vvelE   , & ! y-component of velocity (m/s) interpolated to E location
+         vvelN       ! v at N location for seabed stress calculation
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
-         uvel    , & ! x-component of velocity (m/s)
+         uvelE   , & ! x-component of velocity (m/s)
          taubx       ! seabed stress, x-direction (N/m^2)
 
       ! local variables
@@ -1086,7 +1089,7 @@
       real (kind=dbl_kind) :: &
          uold, vold         , & ! old-time uvel, vvel
          vrel               , & ! relative ice-ocean velocity
-         cca,ccb,ccc,cc1    , & ! intermediate variables
+         cca,ccb,ccc,cc1,vE , & ! intermediate variables
          taux               , & ! part of ocean stress term
          Cb                 , & ! complete seabed (basal) stress coeff
          rhow                   !
@@ -1106,8 +1109,8 @@
          i = indxi(ij)
          j = indxj(ij)
 
-         uold = uvel(i,j)
-         vold = vvel(i,j)
+         uold = uvelE(i,j)
+         vold = vvelE(i,j)
 
          ! (magnitude of relative ocean current)*rhow*drag*aice
          vrel = aiX(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
@@ -1115,8 +1118,12 @@
          ! ice/ocean stress
          taux = vrel*waterx(i,j) ! NOTE this is not the entire
 
-         ccc = sqrt(uold**2 + vold**2) + u0
+         ! seabed stress
+!         vE = grid_neighbor_min(abs(vvelN), i, j, 'E')
+        ccc = sqrt(uold**2 + vold**2) + u0
+!         ccc = sqrt(uold**2 + vE**2) + u0
          Cb  = Tb(i,j) / ccc ! for seabed stress
+
          ! revp = 0 for classic evp, 1 for revised evp
          cca = (brlx + revp)*massdti(i,j) + vrel * cosw + Cb ! kg/m^2 s
 
@@ -1126,11 +1133,11 @@
          cc1 = strintx(i,j) + forcex(i,j) + taux &
              + massdti(i,j)*(brlx*uold + revp*uvel_init(i,j))
 
-         uvel(i,j) = (ccb*vold + cc1) / cca ! m/s
+         uvelE(i,j) = (ccb*vold + cc1) / cca ! m/s
 
          ! calculate seabed stress component for outputs
          ! only needed on last iteration.
-         taubx(i,j) = -uvel(i,j)*Cb
+         taubx(i,j) = -uvelE(i,j)*Cb
 
       enddo                     ! ij
 
@@ -1148,8 +1155,10 @@
                           massdti,    fm,       &
                           strinty,    tauby,    &
                           vvel_init,            &
-                          uvel,       vvel,     &
-                          Tb)
+                          uvelN,      vvelN,    &
+                          uvelE, Tb)
+
+!      use ice_grid, only: grid_neighbor_min
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1171,10 +1180,11 @@
          fm      , & ! Coriolis param. * mass in n-cell (kg/s)
          strinty , & ! divergence of internal ice stress, y (N/m^2)
          Cw      , & ! ocean-ice neutral drag coefficient
-         uvel        ! x-component of velocity (m/s) interpolated to N location
+         uvelN   , & ! x-component of velocity (m/s) interpolated to N location
+         uvelE       ! u at E location for seabed stress calculation
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
-         vvel    , & ! y-component of velocity (m/s)
+         vvelN   , & ! y-component of velocity (m/s)
          tauby       ! seabed stress, y-direction (N/m^2)
 
       ! local variables
@@ -1185,7 +1195,7 @@
       real (kind=dbl_kind) :: &
          uold, vold         , & ! old-time uvel, vvel
          vrel               , & ! relative ice-ocean velocity
-         cca,ccb,ccc,cc2    , & ! intermediate variables
+         cca,ccb,ccc,cc2,uN , & ! intermediate variables
          tauy               , & ! part of ocean stress term
          Cb                 , & ! complete seabed (basal) stress coeff
          rhow                   !
@@ -1205,8 +1215,8 @@
          i = indxi(ij)
          j = indxj(ij)
 
-         uold = uvel(i,j)
-         vold = vvel(i,j)
+         uold = uvelN(i,j)
+         vold = vvelN(i,j)
 
          ! (magnitude of relative ocean current)*rhow*drag*aice
          vrel = aiX(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
@@ -1214,8 +1224,12 @@
          ! ice/ocean stress
          tauy = vrel*watery(i,j) ! NOTE this is not the entire ocn stress
 
+         ! seabed stress
+!         uN = grid_neighbor_min(abs(uvelE), i, j, 'N')
          ccc = sqrt(uold**2 + vold**2) + u0
+!         ccc = sqrt(uN**2 + vold**2) + u0
          Cb  = Tb(i,j) / ccc ! for seabed stress
+
          ! revp = 0 for classic evp, 1 for revised evp
          cca = (brlx + revp)*massdti(i,j) + vrel * cosw + Cb ! kg/m^2 s
 
@@ -1225,11 +1239,11 @@
          cc2 = strinty(i,j) + forcey(i,j) + tauy &
              + massdti(i,j)*(brlx*vold + revp*vvel_init(i,j))
 
-         vvel(i,j) = (-ccb*uold + cc2) / cca
+         vvelN(i,j) = (-ccb*uold + cc2) / cca
 
          ! calculate seabed stress component for outputs
          ! only needed on last iteration.
-         tauby(i,j) = -vvel(i,j)*Cb
+         tauby(i,j) = -vvelN(i,j)*Cb
 
       enddo                     ! ij
 

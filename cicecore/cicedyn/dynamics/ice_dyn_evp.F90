@@ -1045,7 +1045,7 @@
                               strintxE  (:,:,iblk), taubxE    (:,:,iblk), &
                               uvelE_init(:,:,iblk),                       &
                               uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
-                                 TbE       (:,:,iblk))
+                              vvelN     (:,:,iblk), TbE       (:,:,iblk) )
 
                 call stepv_C (nx_block,             ny_block,             & ! v, N point
                               icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
@@ -1057,7 +1057,7 @@
                               strintyN  (:,:,iblk), taubyN    (:,:,iblk), &
                               vvelN_init(:,:,iblk),                       &
                               uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
-                              TbN       (:,:,iblk))
+                              uvelE     (:,:,iblk), TbN       (:,:,iblk) )
             enddo
             !$OMP END PARALLEL DO
 
