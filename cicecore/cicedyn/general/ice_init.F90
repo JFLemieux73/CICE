@@ -3572,7 +3572,7 @@
          do j = 1, ny_block
             do i = 1, nx_block
                if (tmask(i,j)) then
-                  if (i == 75) then
+                  if (iglob(i) == 74) then
                      hwater(i,j) = 5.0 ! shoal
                   else
                      hwater(i,j) = 100.0 ! deep
