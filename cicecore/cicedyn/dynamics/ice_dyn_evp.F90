@@ -1047,6 +1047,16 @@
                               uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
                               vvelN     (:,:,iblk), TbE       (:,:,iblk) )
 
+             enddo
+             !$OMP END PARALLEL DO
+
+             call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+                                  field_loc_Eface, field_type_vector, &
+                                  uvelE)
+
+             !$OMP PARALLEL DO PRIVATE(iblk)
+             do iblk = 1, nblocks
+
                 call stepv_C (nx_block,             ny_block,             & ! v, N point
                               icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
                               indxNi      (:,iblk), indxNj      (:,iblk), &
@@ -1058,13 +1068,13 @@
                               vvelN_init(:,:,iblk),                       &
                               uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                               uvelE     (:,:,iblk), TbN       (:,:,iblk) )
-            enddo
-            !$OMP END PARALLEL DO
+             enddo
+             !$OMP END PARALLEL DO
 
             ! calls ice_haloUpdate, controls bundles and masks
-            call dyn_haloUpdate (halo_info,       halo_info_mask,    &
-                                 field_loc_Eface, field_type_vector, &
-                                 uvelE)
+!            call dyn_haloUpdate (halo_info,       halo_info_mask,    &
+!                                field_loc_Eface, field_type_vector, &
+!                                 uvelE)
             call dyn_haloUpdate (halo_info,       halo_info_mask,    &
                                  field_loc_Nface, field_type_vector, &
                                  vvelN)
