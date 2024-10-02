@@ -3417,6 +3417,20 @@
             enddo
             enddo
 
+         elseif (trim(ice_data_type) == 'minieastblock') then
+            ! block on east half of domain in center of domain
+            icells = 0
+            do j = jlo, jhi
+            do i = ilo, ihi
+               if (jglob(j) > ny_global/4 .and. jglob(j) < 3*nx_global/4 .and. &
+                   iglob(i) >= 74) then
+                  icells = icells + 1
+                  indxi(icells) = i
+                  indxj(icells) = j
+               endif
+            enddo
+            enddo
+
          elseif (trim(ice_data_type) == 'latsst') then
 
             !-----------------------------------------------------------------
