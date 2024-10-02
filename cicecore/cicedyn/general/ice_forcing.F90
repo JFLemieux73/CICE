@@ -319,6 +319,8 @@
          call uniform_data_atm('S')
       elseif (trim(atm_data_type) == 'uniform_west') then
          call uniform_data_atm('W')
+      elseif (trim(atm_data_type) == 'uniform_NWW') then
+         call uniform_data_atm('NWW')
       elseif (trim(atm_data_type) == 'calm') then
          call uniform_data_atm('N',c0) ! direction does not matter when c0
       elseif (trim(atm_data_type) == 'hycom') then
@@ -655,6 +657,8 @@
          call uniform_data_atm('S')
       elseif (trim(atm_data_type) == 'uniform_west') then
          call uniform_data_atm('W')
+      elseif (trim(atm_data_type) == 'uniform_NWW') then
+         call uniform_data_atm('NWW')
       elseif (trim(atm_data_type) == 'calm') then
          call uniform_data_atm('N',c0) ! direction does not matter when c0
       elseif (trim(atm_data_type) == 'hycom') then
@@ -5293,6 +5297,9 @@
       elseif (dir == 'W') then
          uatm = -atm_val
          vatm = c0
+      elseif (dir == 'NWW') then
+         uatm = -atm_val
+         vatm = -atm_val
       else
          call abort_ice (subname//'ERROR: dir unknown, dir = '//trim(dir), &
               file=__FILE__, line=__LINE__)
