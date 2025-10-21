@@ -47,7 +47,7 @@
           ndte, yield_curve, ecci, denom1, arlx1i, fcor_blk, fcorE_blk, fcorN_blk, &
           uvel_init, vvel_init, uvelE_init, vvelE_init, uvelN_init, vvelN_init, &
           seabed_stress_factor_LKD, seabed_stress_factor_prob, seabed_stress_method, &
-          seabed_stress, Ktens, revp
+          seabed_stress, Ktens, revp, boundary_cond
       use ice_fileunits, only: nu_diag
       use ice_exit, only: abort_ice
       use icepack_intfc, only: icepack_warnings_flush, icepack_warnings_aborted
@@ -344,6 +344,8 @@
       ! Initialize
       !-----------------------------------------------------------------
 
+      boundary_cond='freeslip'
+      
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
 
          strengthU(:,:,:) = c0
@@ -933,29 +935,52 @@
 
          do ksub = 1,ndte        ! subcycling
 
-            !$OMP PARALLEL DO PRIVATE(iblk)
-            do iblk = 1, nblocks
-
             !-----------------------------------------------------------------
             ! strain rates at U point
             ! NOTE these are actually strain rates * area  (m^2/s)
             !-----------------------------------------------------------------
-               call strain_rates_U_freeslip (nx_block          , ny_block           , &
-                                             icellU      (iblk),                      &
-                                             indxUi    (:,iblk), indxUj     (:,iblk), &
-                                             uvelE   (:,:,iblk), vvelE    (:,:,iblk), &
-                                             uvelN   (:,:,iblk), vvelN    (:,:,iblk), &
-                                             uvel    (:,:,iblk), vvel     (:,:,iblk), &
-                                             dxE     (:,:,iblk), dyN      (:,:,iblk), &
-                                             dxU     (:,:,iblk), dyU      (:,:,iblk), &
-                                             ratiodxN(:,:,iblk), ratiodxNr(:,:,iblk), &
-                                             ratiodyE(:,:,iblk), ratiodyEr(:,:,iblk), &
-                                             epm     (:,:,iblk), npm      (:,:,iblk), &
-                                             divergU (:,:,iblk), tensionU (:,:,iblk), &
-                                             shearU  (:,:,iblk), deltaU   (:,:,iblk)  )
 
-            enddo  ! iblk
-            !$OMP END PARALLEL DO
+            if ( boundary_cond == 'noslip' ) then
+               !$OMP PARALLEL DO PRIVATE(iblk)
+               do iblk = 1, nblocks
+                  call strain_rates_U (nx_block          , ny_block           , &
+                                       icellU      (iblk),                      &
+                                       indxUi    (:,iblk), indxUj     (:,iblk), &
+                                       uvelE   (:,:,iblk), vvelE    (:,:,iblk), &
+                                       uvelN   (:,:,iblk), vvelN    (:,:,iblk), &
+                                       uvel    (:,:,iblk), vvel     (:,:,iblk), &
+                                       dxE     (:,:,iblk), dyN      (:,:,iblk), &
+                                       dxU     (:,:,iblk), dyU      (:,:,iblk), &
+                                       ratiodxN(:,:,iblk), ratiodxNr(:,:,iblk), &
+                                       ratiodyE(:,:,iblk), ratiodyEr(:,:,iblk), &
+                                       epm     (:,:,iblk), npm      (:,:,iblk), &
+                                       divergU (:,:,iblk), tensionU (:,:,iblk), &
+                                       shearU  (:,:,iblk), deltaU   (:,:,iblk)  )
+
+               enddo  ! iblk
+               !$OMP END PARALLEL DO
+            
+            elseif ( boundary_cond == 'freeslip' ) then
+               !$OMP PARALLEL DO PRIVATE(iblk)
+               do iblk = 1, nblocks
+                  call strain_rates_U_freeslip (nx_block          , ny_block           , &
+                                                icellU      (iblk),                      &
+                                                indxUi    (:,iblk), indxUj     (:,iblk), &
+                                                uvelE   (:,:,iblk), vvelE    (:,:,iblk), &
+                                                uvelN   (:,:,iblk), vvelN    (:,:,iblk), &
+                                                uvel    (:,:,iblk), vvel     (:,:,iblk), &
+                                                dxE     (:,:,iblk), dyN      (:,:,iblk), &
+                                                dxU     (:,:,iblk), dyU      (:,:,iblk), &
+                                                ratiodxN(:,:,iblk), ratiodxNr(:,:,iblk), &
+                                                ratiodyE(:,:,iblk), ratiodyEr(:,:,iblk), &
+                                                epm     (:,:,iblk), npm      (:,:,iblk), &
+                                                divergU (:,:,iblk), tensionU (:,:,iblk), &
+                                                shearU  (:,:,iblk), deltaU   (:,:,iblk)  )
+
+               enddo  ! iblk
+               !$OMP END PARALLEL DO
+
+            endif
 
             ! calls ice_haloUpdate, controls bundles and masks
             call dyn_haloUpdate (halo_info,          halo_info_mask,    &

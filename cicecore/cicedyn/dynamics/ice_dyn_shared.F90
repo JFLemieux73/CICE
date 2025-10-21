@@ -60,6 +60,7 @@
       character (len=char_len), public :: &
          yield_curve      , & ! 'ellipse' ('teardrop' needs further testing)
          visc_method      , & ! method for viscosity calc at U points (C, CD grids)
+         boundary_cond    , & ! boundary conditions: noslip or freeslip
          seabed_stress_method ! method for seabed stress calculation
                               ! LKD: Lemieux et al. 2015, probabilistic: Dupont et al. 2022
 
