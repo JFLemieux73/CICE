@@ -27,7 +27,7 @@
                 principal_stress, init_dyn_shared, dyn_prep1, dyn_prep2, dyn_finish, &
                 seabed_stress_factor_LKD, seabed_stress_factor_prob, &
                 deformations, deformationsC_T, deformationsCD_T, &
-                strain_rates, strain_rates_T, strain_rates_U, &
+                strain_rates, strain_rates_T, strain_rates_U, strain_rates_U_freeslip, &
                 visc_replpress, &
                 dyn_haloUpdate, &
                 stack_fields, unstack_fields
@@ -2389,6 +2389,125 @@
       enddo
 
       end subroutine strain_rates_U
+
+!=======================================================================
+! Compute strain rates at the U point including boundary conditions
+!
+! author: JF Lemieux, ECCC
+! Nov 2021
+
+      subroutine strain_rates_U_freeslip (nx_block,   ny_block,  &
+                                          icellU,                &
+                                          indxUi,     indxUj,    &
+                                          uvelE,      vvelE,     &
+                                          uvelN,      vvelN,     &
+                                          uvelU,      vvelU,     &
+                                          dxE,        dyN,       &
+                                          dxU,        dyU,       &
+                                          ratiodxN,   ratiodxNr, &
+                                          ratiodyE,   ratiodyEr, &
+                                          epm,        npm,       &
+                                          divergU,    tensionU,  &
+                                          shearU,     DeltaU     )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block, & ! block dimensions
+         icellU
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxUi   , & ! compressed index in i-direction
+         indxUj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         uvelE    , & ! x-component of velocity (m/s) at the E point
+         vvelE    , & ! y-component of velocity (m/s) at the N point
+         uvelN    , & ! x-component of velocity (m/s) at the E point
+         vvelN    , & ! y-component of velocity (m/s) at the N point
+         uvelU    , & ! x-component of velocity (m/s) interp. at U point
+         vvelU    , & ! y-component of velocity (m/s) interp. at U point
+         dxE      , & ! width of E-cell through the middle (m)
+         dyN      , & ! height of N-cell through the middle (m)
+         dxU      , & ! width of U-cell through the middle (m)
+         dyU      , & ! height of U-cell through the middle (m)
+         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) for BCs
+         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) for BCs
+         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) for BCs
+         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
+         epm      , & ! E-cell mask
+         npm          ! N-cell mask
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out):: &
+         divergU  , & ! divergence at U point
+         tensionU , & ! tension at U point
+         shearU   , & ! shear at U point
+         DeltaU       ! delt at the U point
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         ij, i, j                  ! indices
+
+      real (kind=dbl_kind) :: &
+        uNip1j, uNij, vEijp1, vEij, uEijp1, uEij, vNip1j, vNij
+
+      character(len=*), parameter :: subname = '(strain_rates_U)'
+
+      !-----------------------------------------------------------------
+      ! strain rates
+      ! NOTE these are actually strain rates * area  (m^2/s)
+      !-----------------------------------------------------------------
+
+      divergU (:,:) = c0
+      tensionU(:,:) = c0
+      shearU  (:,:) = c0
+      deltaU  (:,:) = c0
+
+      do ij = 1, icellU
+         i = indxUi(ij)
+         j = indxUj(ij)
+
+         uNip1j = uvelN(i+1,j) * npm(i+1,j) &
+                +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * uvelN(i,j)
+         uNij   = uvelN(i,j) * npm(i,j) &
+                +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * uvelN(i+1,j)
+         vEijp1 = vvelE(i,j+1) * epm(i,j+1) &
+                +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * vvelE(i,j)
+         vEij   = vvelE(i,j) * epm(i,j) &
+                +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
+
+         ! divergence  =  e_11 + e_22
+         divergU (i,j) = dyU(i,j) * ( uNip1j - uNij ) &
+                       + uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
+                       + dxU(i,j) * ( vEijp1 - vEij ) &
+                       + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
+
+         ! tension strain rate  =  e_11 - e_22
+         tensionU(i,j) = dyU(i,j) * ( uNip1j - uNij ) &
+                       - uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
+                       - dxU(i,j) * ( vEijp1 - vEij ) &
+                       + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
+
+         uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
+                +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
+         uEij   = uvelE(i,j) * epm(i,j) &
+                +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * uvelE(i,j+1)
+         vNip1j = vvelN(i+1,j) * npm(i+1,j) &
+                +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * vvelN(i,j)
+         vNij   = vvelN(i,j) * npm(i,j) &
+                +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * vvelN(i+1,j)
+
+         ! shearing strain rate  =  2*e_12
+         shearU(i,j)   = dxU(i,j) * ( uEijp1 - uEij ) &
+                       - uvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
+                       + dyU(i,j) * ( vNip1j - vNij ) &
+                       - vvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) )
+
+         ! Delta (in the denominator of zeta, eta)
+         DeltaU(i,j)   = sqrt(divergU(i,j)**2 + e_factor*(tensionU(i,j)**2 + shearU(i,j)**2))
+
+      enddo
+
+    end subroutine strain_rates_U_freeslip
 
 !=======================================================================
 ! Computes viscosities and replacement pressure for stress
