@@ -2405,11 +2405,8 @@
                                           uvelU,      vvelU,     &
                                           dxE,        dyN,       &
                                           dxU,        dyU,       &
-                                          ratiodxN,   ratiodxNr, &
-                                          ratiodyE,   ratiodyEr, &
                                           epm,        npm,       &
-                                          divergU,    tensionU,  &
-                                          shearU,     DeltaU     )
+                                          shearU                 )
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -2430,18 +2427,11 @@
          dyN      , & ! height of N-cell through the middle (m)
          dxU      , & ! width of U-cell through the middle (m)
          dyU      , & ! height of U-cell through the middle (m)
-         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) for BCs
-         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) for BCs
-         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) for BCs
-         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
          epm      , & ! E-cell mask
          npm          ! N-cell mask
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out):: &
-         divergU  , & ! divergence at U point
-         tensionU , & ! tension at U point
-         shearU   , & ! shear at U point
-         DeltaU       ! delt at the U point
+         shearU       ! shear at U point
 
       ! local variables
 
@@ -2449,7 +2439,7 @@
          ij, i, j                  ! indices
 
       real (kind=dbl_kind) :: &
-        uNip1j, uNij, vEijp1, vEij, uEijp1, uEij, vNip1j, vNij
+        uEijp1, uEij, vNip1j, vNij
 
       character(len=*), parameter :: subname = '(strain_rates_U)'
 
@@ -2458,23 +2448,25 @@
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
-      divergU (:,:) = c0
-      tensionU(:,:) = c0
       shearU  (:,:) = c0
-      deltaU  (:,:) = c0
 
       do ij = 1, icellU
          i = indxUi(ij)
          j = indxUj(ij)
 
          uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
-                +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
+                +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * uvelE(i,j)
          uEij   = uvelE(i,j) * epm(i,j) &
-                +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * uvelE(i,j+1)
+                +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * uvelE(i,j+1)
          vNip1j = vvelN(i+1,j) * npm(i+1,j) &
-                +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * vvelN(i,j)
+                +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * vvelN(i,j)
          vNij   = vvelN(i,j) * npm(i,j) &
-                +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * vvelN(i+1,j)
+                +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * vvelN(i+1,j)
+
+         ! We want shearU=0 at a land-ocean boundary when boundary_cond = 'freeslip'
+         ! Even though uvelU (for exemple with land to the north) equal to zero seems 
+         ! insconsistent with du/dy=0 at the boundary it ensures that shearU=0. Same 
+         ! idea for vvelU.
 
          ! shearing strain rate  =  2*e_12
          shearU(i,j)   = dxU(i,j) * ( uEijp1 - uEij ) &

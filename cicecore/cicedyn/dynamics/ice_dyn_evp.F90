@@ -978,11 +978,8 @@
                                                 uvel    (:,:,iblk), vvel     (:,:,iblk), &
                                                 dxE     (:,:,iblk), dyN      (:,:,iblk), &
                                                 dxU     (:,:,iblk), dyU      (:,:,iblk), &
-                                                ratiodxN(:,:,iblk), ratiodxNr(:,:,iblk), &
-                                                ratiodyE(:,:,iblk), ratiodyEr(:,:,iblk), &
                                                 epm     (:,:,iblk), npm      (:,:,iblk), &
-                                                divergU (:,:,iblk), tensionU (:,:,iblk), &
-                                                shearU  (:,:,iblk), deltaU   (:,:,iblk)  )
+                                                shearU  (:,:,iblk)                       )
 
                enddo  ! iblk
                !$OMP END PARALLEL DO
