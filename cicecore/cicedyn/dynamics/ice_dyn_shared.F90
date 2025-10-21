@@ -2467,27 +2467,6 @@
          i = indxUi(ij)
          j = indxUj(ij)
 
-         uNip1j = uvelN(i+1,j) * npm(i+1,j) &
-                +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * uvelN(i,j)
-         uNij   = uvelN(i,j) * npm(i,j) &
-                +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * uvelN(i+1,j)
-         vEijp1 = vvelE(i,j+1) * epm(i,j+1) &
-                +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * vvelE(i,j)
-         vEij   = vvelE(i,j) * epm(i,j) &
-                +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
-
-         ! divergence  =  e_11 + e_22
-         divergU (i,j) = dyU(i,j) * ( uNip1j - uNij ) &
-                       + uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
-                       + dxU(i,j) * ( vEijp1 - vEij ) &
-                       + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
-
-         ! tension strain rate  =  e_11 - e_22
-         tensionU(i,j) = dyU(i,j) * ( uNip1j - uNij ) &
-                       - uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
-                       - dxU(i,j) * ( vEijp1 - vEij ) &
-                       + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
-
          uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
                 +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
          uEij   = uvelE(i,j) * epm(i,j) &
@@ -2502,9 +2481,6 @@
                        - uvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
                        + dyU(i,j) * ( vNip1j - vNij ) &
                        - vvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) )
-
-         ! Delta (in the denominator of zeta, eta)
-         DeltaU(i,j)   = sqrt(divergU(i,j)**2 + e_factor*(tensionU(i,j)**2 + shearU(i,j)**2))
 
       enddo
 

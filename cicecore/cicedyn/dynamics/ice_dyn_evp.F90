@@ -345,6 +345,13 @@
       !-----------------------------------------------------------------
 
       boundary_cond='freeslip'
+
+      if (visc_method == 'avg_strength' .and. boundary_cond == 'freeslip') then
+
+         print *, 'Options not compatible for the moment'
+         stop
+
+      endif
       
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
 
