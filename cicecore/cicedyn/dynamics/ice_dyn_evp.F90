@@ -1046,7 +1046,7 @@
                 call stepu_C (nx_block            , ny_block            , & ! u, E point
                               icellE        (iblk), Cdn_ocnE  (:,:,iblk), &
                               indxEi      (:,iblk), indxEj      (:,iblk), &
-                                                    aiE       (:,:,iblk), &
+                              rheofactE (:,:,iblk), aiE       (:,:,iblk), &
                               uocnE     (:,:,iblk), vocnE     (:,:,iblk), &
                               waterxE   (:,:,iblk), forcexE   (:,:,iblk), &
                               emassdti  (:,:,iblk), fmE       (:,:,iblk), &
@@ -1058,7 +1058,7 @@
                 call stepv_C (nx_block,             ny_block,             & ! v, N point
                               icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
                               indxNi      (:,iblk), indxNj      (:,iblk), &
-                                                    aiN       (:,:,iblk), &
+                              rheofactN (:,:,iblk), aiN       (:,:,iblk), &
                               uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
                               wateryN   (:,:,iblk), forceyN   (:,:,iblk), &
                               nmassdti  (:,:,iblk), fmN       (:,:,iblk), &
@@ -1246,7 +1246,7 @@
                call stepuv_CD (nx_block            , ny_block            , & ! E point
                                icellE        (iblk), Cdn_ocnE  (:,:,iblk), &
                                indxEi      (:,iblk), indxEj      (:,iblk), &
-                                                     aiE       (:,:,iblk), &
+                               rheofactE (:,:,iblk), aiE       (:,:,iblk), &
                                uocnE     (:,:,iblk), vocnE     (:,:,iblk), &
                                waterxE   (:,:,iblk), wateryE   (:,:,iblk), &
                                forcexE   (:,:,iblk), forceyE   (:,:,iblk), &
@@ -1260,7 +1260,7 @@
                call stepuv_CD (nx_block            , ny_block            , & ! N point
                                icellN        (iblk), Cdn_ocnN  (:,:,iblk), &
                                indxNi      (:,iblk), indxNj      (:,iblk), &
-                                                     aiN       (:,:,iblk), &
+                               rheofactN (:,:,iblk), aiN       (:,:,iblk), &
                                uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
                                waterxN   (:,:,iblk), wateryN   (:,:,iblk), &
                                forcexN   (:,:,iblk), forceyN   (:,:,iblk), &

@@ -681,7 +681,7 @@
          strinty , & ! divergence of internal ice stress, y (N/m^2)
          taubx   , & ! seabed stress, x-direction (N/m^2)
          tauby   , & ! seabed stress, y-direction (N/m^2)
-         rheofactX   ! mult. factor = 1, set to 0 if aiU <= rheo_area_min
+         rheofactX   ! mult. factor = 1, set to 0 if aiX <= rheo_area_min
          
 
       ! local variables
@@ -969,7 +969,7 @@
       subroutine stepuv_CD (nx_block,   ny_block, &
                             icell,      Cw,       &
                             indxi,      indxj,    &
-                                        aiX,      &
+                            rheofactX,  aiX,      &
                             uocn,       vocn,     &
                             waterx,     watery,   &
                             forcex,     forcey,   &
@@ -992,6 +992,7 @@
          Tb,       & ! seabed stress factor (N/m^2)
          uvel_init,& ! x-component of velocity (m/s), beginning of timestep
          vvel_init,& ! y-component of velocity (m/s), beginning of timestep
+         rheofactX,& ! mult. factor = 1, set to 0 if aiX <= rheo_area_min
          aiX     , & ! ice fraction on X-grid
          waterx  , & ! for ocean stress calculation, x (m/s)
          watery  , & ! for ocean stress calculation, y (m/s)
@@ -1064,9 +1065,9 @@
          ab2 = cca**2 + ccb**2
 
          ! compute the velocity components
-         cc1 = strintx(i,j) + forcex(i,j) + taux &
+         cc1 = rheofactX(i,j)*strintx(i,j) + forcex(i,j) + taux &
              + massdti(i,j)*(brlx*uold + revp*uvel_init(i,j))
-         cc2 = strinty(i,j) + forcey(i,j) + tauy &
+         cc2 = rheofactX(i,j)*strinty(i,j) + forcey(i,j) + tauy &
              + massdti(i,j)*(brlx*vold + revp*vvel_init(i,j))
          uvel(i,j) = (cca*cc1 + ccb*cc2) / ab2 ! m/s
          vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
@@ -1086,7 +1087,7 @@
       subroutine stepu_C (nx_block,   ny_block, &
                           icell,      Cw,       &
                           indxi,      indxj,    &
-                                      aiX,      &
+                          rheofactE,  aiE,      &
                           uocn,       vocn,     &
                           waterx,     forcex,   &
                           massdti,    fm,       &
@@ -1106,7 +1107,8 @@
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Tb,       & ! seabed stress factor (N/m^2)
          uvel_init,& ! x-component of velocity (m/s), beginning of timestep
-         aiX     , & ! ice fraction on X-grid
+         rheofactE,& ! mult. factor = 1, set to 0 if aiE <= rheo_area_min
+         aiE     , & ! ice fraction on X-grid
          waterx  , & ! for ocean stress calculation, x (m/s)
          forcex  , & ! work array: combined atm stress and ocn tilt, x
          massdti , & ! mass of e-cell/dt (kg/m^2 s)
@@ -1153,7 +1155,7 @@
          vold = vvel(i,j)
 
          ! (magnitude of relative ocean current)*rhow*drag*aice
-         vrel = aiX(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
+         vrel = aiE(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
                                            (vocn(i,j) - vold)**2)  ! m/s
          ! ice/ocean stress
          taux = vrel*waterx(i,j) ! NOTE this is not the entire
@@ -1166,7 +1168,7 @@
          ccb = fm(i,j) + sign(c1,fm(i,j)) * vrel * sinw ! kg/m^2 s
 
          ! compute the velocity components
-         cc1 = strintx(i,j) + forcex(i,j) + taux &
+         cc1 = rheofactE(i,j)*strintx(i,j) + forcex(i,j) + taux &
              + massdti(i,j)*(brlx*uold + revp*uvel_init(i,j))
 
          uvel(i,j) = (ccb*vold + cc1) / cca ! m/s
@@ -1185,7 +1187,7 @@
       subroutine stepv_C (nx_block,   ny_block, &
                           icell,      Cw,       &
                           indxi,      indxj,    &
-                                      aiX,      &
+                          rheofactN,  aiN,      &
                           uocn,       vocn,     &
                           watery,     forcey,   &
                           massdti,    fm,       &
@@ -1205,7 +1207,8 @@
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          Tb,       & ! seabed stress factor (N/m^2)
          vvel_init,& ! y-component of velocity (m/s), beginning of timestep
-         aiX     , & ! ice fraction on X-grid
+         rheofactN,& ! mult. factor = 1, set to 0 if aiN <= rheo_area_min
+         aiN     , & ! ice fraction on X-grid
          watery  , & ! for ocean stress calculation, y (m/s)
          forcey  , & ! work array: combined atm stress and ocn tilt, y
          massdti , & ! mass of n-cell/dt (kg/m^2 s)
@@ -1252,7 +1255,7 @@
          vold = vvel(i,j)
 
          ! (magnitude of relative ocean current)*rhow*drag*aice
-         vrel = aiX(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
+         vrel = aiN(i,j)*rhow*Cw(i,j)*sqrt((uocn(i,j) - uold)**2 + &
                                            (vocn(i,j) - vold)**2)  ! m/s
          ! ice/ocean stress
          tauy = vrel*watery(i,j) ! NOTE this is not the entire ocn stress
@@ -1265,7 +1268,7 @@
          ccb = fm(i,j) + sign(c1,fm(i,j)) * vrel * sinw ! kg/m^2 s
 
          ! compute the velocity components
-         cc2 = strinty(i,j) + forcey(i,j) + tauy &
+         cc2 = rheofactN(i,j)*strinty(i,j) + forcey(i,j) + tauy &
              + massdti(i,j)*(brlx*vold + revp*vvel_init(i,j))
 
          vvel(i,j) = (-ccb*uold + cc2) / cca
